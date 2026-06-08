@@ -1,0 +1,97 @@
+{
+  "phase": "02",
+  "component": "DynamicsEngine + DifferentialDrive",
+  "date": "2026-06-08",
+  "verdict": "PASS",
+  "checked_by": "QA",
+  "results": {
+    "DynamicsEngine": {
+      "sealed_class": {
+        "pass": true,
+        "detail": "classdef (Sealed) DynamicsEngine at line 1"
+      },
+      "rk4Step_formula": {
+        "pass": true,
+        "detail": "Standard RK4: k1..k4 computed per ADR spec, stateOut = state + (dt/6)*(k1+2k2+2k3+k4)"
+      },
+      "integrate_returns_Nx13": {
+        "pass": true,
+        "detail": "Allocates zeros(N,13), sets row 1, loops rk4Step, returns Nx13 matrix"
+      }
+    },
+    "DifferentialDrive": {
+      "inherits_robot_not_handle": {
+        "pass": true,
+        "detail": "classdef DifferentialDrive < robot.Robot"
+      },
+      "constructor_params_struct": {
+        "pass": true,
+        "detail": "Reads geometry.wheelRadius, geometry.trackWidth, dynamics.mass, dynamics.inertia, dynamics.maxTorque"
+      },
+      "move_FORWARD": {
+        "pass": true,
+        "detail": "Control = [+amount; +amount]"
+      },
+      "move_BACKWARD": {
+        "pass": true,
+        "detail": "Control = [-amount; -amount]"
+      },
+      "move_LEFT_YAW_LEFT": {
+        "pass": true,
+        "detail": "Control = [-amount; +amount]"
+      },
+      "move_RIGHT_YAW_RIGHT": {
+        "pass": true,
+        "detail": "Control = [+amount; -amount]"
+      },
+      "move_STOP": {
+        "pass": true,
+        "detail": "Control = [0; 0]"
+      },
+      "move_RESET": {
+        "pass": true,
+        "detail": "Calls obj.reset()"
+      },
+      "move_aerial_noop": {
+        "pass": true,
+        "detail": "Unmatched cases (UP, DOWN, ROLL, PITCH) fall through to 'otherwise' — no-op"
+      },
+      "buildGeometry_output": {
+        "pass": true,
+        "detail": "Returns 24×3 verts (body 8 + left wheel 8 + right wheel 8), 18×4 faces, 36×2 edges; all indices are 1-based and valid (1–24)"
+      },
+      "computeDynamics": {
+        "pass": true,
+        "detail": "Implements planar dynamics per ADR: F_drive = sum(torques)/r, T_yaw = diff(torques)*w/(2r), dvel_x = F/m, domega_z = T/I, dpos = R*[vx;0;0], dq = 0.5*q*omega_Q"
+      },
+      "step_override": {
+        "pass": true,
+        "detail": "Overrides Robot.step with real RK4 integration via DynamicsEngine.rk4Step, then calls obj.setState(s) (which calls updatePoseFromState). Handles empty Control gracefully."
+      },
+      "plot_override": {
+        "pass": true,
+        "detail": "Calls plot@robot.Robot to create hgtransform, then creates patch + line primitives from buildGeometry output"
+      }
+    },
+    "package_conventions": {
+      "all_files_in_robot": {
+        "pass": true,
+        "detail": "6 files: Direction.m, DifferentialDrive.m, DynamicsEngine.m, Robot.m, Utils.m, Visualizer.m"
+      },
+      "internal_references_no_import": {
+        "pass": true,
+        "detail": "No 'import robot.*' anywhere. DifferentialDrive uses robot.Robot, robot.Direction, robot.Utils.quatToRotmx, robot.Utils.quatMultiply. DynamicsEngine.rk4Step is bare (valid within-package reference)."
+      },
+      "import_robot_works": {
+        "pass": true,
+        "detail": "All classdef files in +robot/ are properly defined; import robot.* resolves all six classes."
+      }
+    }
+  },
+  "notes": [
+    "ADR text for buildGeometry left wheel offset says (-trackWidth/2, 0, 0) but code uses (0, -trackWidth/2, 0). Code placement is physically correct (wheels on left/right sides); ADR text has a typo.",
+    "DifferentialDrive.step() adds empty-Control guard ([0;0] fallback) not in ADR spec — a safety improvement.",
+    "DifferentialDrive.step() uses obj.setState(s) instead of explicit State assignment + updatePoseFromState — functionally equivalent and cleaner."
+  ],
+  "blocker_reason": null
+}

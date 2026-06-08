@@ -22,9 +22,9 @@
       "id": "02",
       "name": "DifferentialDrive + DynamicsEngine",
       "description": "Create DifferentialDrive robot (3-DOF planar) and DynamicsEngine (RK4 integrator).",
-      "status": "pending",
+      "status": "completed",
       "files": ["+robot/DifferentialDrive.m", "+robot/DynamicsEngine.m"],
-      "verified_by": null,
+      "verified_by": "QA",
       "blocker_reason": null
     },
     {

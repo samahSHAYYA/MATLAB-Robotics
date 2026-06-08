@@ -1,0 +1,20 @@
+{
+  "phase": "02",
+  "name": "DifferentialDrive + DynamicsEngine",
+  "completed_at": "2026-06-08T17:30:00Z",
+  "files_created": [
+    "+robot/DynamicsEngine.m",
+    "+robot/DifferentialDrive.m"
+  ],
+  "files_modified": [],
+  "adrs": ["docs/adr/0002-differential-drive-and-dynamics-engine.md"],
+  "decisions": [
+    "DynamicsEngine sealed static class with RK4 and integrate methods",
+    "DifferentialDrive planar 3-DOF: no sideslip, instant ground reaction",
+    "step() overrides Robot base to call DynamicsEngine.rk4Step",
+    "Wireframe: patch for faces + line per edge (acceptable for simple geometry)"
+  ],
+  "verified_by": "QA",
+  "blockers": [],
+  "next_phase": "03"
+}
