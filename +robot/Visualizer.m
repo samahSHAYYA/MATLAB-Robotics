@@ -37,7 +37,7 @@ classdef Visualizer < handle
         end
 
         function update(obj, robot)
-            R = Utils.quatToRotmx(robot.State(4:7));
+            R = robot.Utils.quatToRotmx(robot.State(4:7));
             pos = robot.State(1:3);
             T = eye(4);
             T(1:3, 1:3) = R;

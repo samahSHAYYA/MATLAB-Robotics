@@ -1,0 +1,26 @@
+{
+  "phase": "04",
+  "name": "Quadcopter + AerialRobot",
+  "completed_at": "2026-06-08T18:30:00Z",
+  "files_created": [
+    "+robot/AerialRobot.m",
+    "+robot/Quadcopter.m"
+  ],
+  "files_modified": [
+    "demo.m"
+  ],
+  "adrs": ["docs/adr/0003-quadcopter-and-aerialrobot.md"],
+  "bugs_fixed": [
+    "Visualizer.m: Utils.quatToRotmx() -> robot.Utils.quatToRotmx() (missing package prefix)",
+    "DifferentialDrive.m: DynamicsEngine.rk4Step() -> robot.DynamicsEngine.rk4Step() (missing package prefix)"
+  ],
+  "decisions": [
+    "AerialRobot provides step() override + hover() convenience",
+    "Quadcopter 6-DOF dynamics with X-configuration rotors, additive delta + clamping",
+    "kTorque exposed in params with default 0.01",
+    "All cross-package references must use robot. prefix"
+  ],
+  "verified_by": "QA",
+  "blockers": [],
+  "next_phase": "05"
+}

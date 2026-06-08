@@ -40,9 +40,9 @@
       "id": "04",
       "name": "Quadcopter + AerialRobot",
       "description": "Create AerialRobot abstract (full 6-DOF) and Quadcopter (rotor thrust/torque model).",
-      "status": "pending",
+      "status": "completed",
       "files": ["+robot/AerialRobot.m", "+robot/Quadcopter.m"],
-      "verified_by": null,
+      "verified_by": "QA",
       "blocker_reason": null
     },
     {

@@ -13,6 +13,14 @@ function demo(robotType)
             params.dynamics.inertia     = 0.05;
             params.dynamics.maxTorque   = 5.0;
             robot = DifferentialDrive(params);
+        case 'Quadcopter'
+            params.geometry.armLength = 0.2;
+            params.geometry.bodySize = [0.1, 0.1, 0.05];
+            params.dynamics.mass = 0.5;
+            params.dynamics.inertia = diag([0.002, 0.002, 0.004]);
+            params.dynamics.maxThrust = 2.0;
+            params.dynamics.kTorque = 0.01;
+            robot = Quadcopter(params);
         otherwise
             error('Unknown robot type: %s', robotType);
     end

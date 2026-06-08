@@ -131,7 +131,7 @@ classdef DifferentialDrive < robot.Robot
                 u = obj.Control;
             end
             dynFun = @(t, s, u) obj.computeDynamics(t, s, u);
-            s = DynamicsEngine.rk4Step(dynFun, t, obj.State, u, dt);
+            s = robot.DynamicsEngine.rk4Step(dynFun, t, obj.State, u, dt);
             obj.setState(s);
         end
 

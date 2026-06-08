@@ -64,8 +64,8 @@ classdef Robot < handle
     methods (Access = private)
         function updatePoseFromState(obj)
             obj.Pose.position = obj.State(1:3);
-            R = Utils.quatToRotmx(obj.State(4:7));
-            [roll, pitch, yaw] = Utils.rotmxToRPY(R);
+            R = robot.Utils.quatToRotmx(obj.State(4:7));
+            [roll, pitch, yaw] = robot.Utils.rotmxToRPY(R);
             obj.Pose.orientation = [roll; pitch; yaw];
         end
     end
