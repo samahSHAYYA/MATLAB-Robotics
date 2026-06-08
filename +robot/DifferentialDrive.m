@@ -1,4 +1,4 @@
-classdef DifferentialDrive < robot.Robot
+classdef DifferentialDrive < robot.GroundRobot
     properties
         wheelRadius (1,1) double
         trackWidth  (1,1) double
@@ -12,7 +12,7 @@ classdef DifferentialDrive < robot.Robot
             arguments
                 params (1,1) struct
             end
-            obj@robot.Robot(params);
+            obj@robot.GroundRobot(params);
             obj.wheelRadius = params.geometry.wheelRadius;
             obj.trackWidth = params.geometry.trackWidth;
             obj.mass = params.dynamics.mass;
@@ -119,21 +119,6 @@ classdef DifferentialDrive < robot.Robot
             dstate = [dpos; dq; dvel_x; dvel_y; dvel_z; domega_x; domega_y; domega_z];
         end
 
-        function step(obj, t, dt)
-            arguments
-                obj
-                t (1,1) double
-                dt (1,1) double
-            end
-            if isempty(obj.Control)
-                u = [0; 0];
-            else
-                u = obj.Control;
-            end
-            dynFun = @(t, s, u) obj.computeDynamics(t, s, u);
-            s = robot.DynamicsEngine.rk4Step(dynFun, t, obj.State, u, dt);
-            obj.setState(s);
-        end
 
         function hg = plot(obj, ax)
             hg = plot@robot.Robot(obj, ax);

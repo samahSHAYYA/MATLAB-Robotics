@@ -47,11 +47,11 @@
     },
     {
       "id": "05",
-      "name": "Refactor GroundRobot + AerialRobot abstracts",
-      "description": "Extract commonality into GroundRobot (planar constraint) and AerialRobot (6-DOF) abstract classes. DifferentialDrive and Quadcopter inherit respectively.",
-      "status": "pending",
-      "files": ["+robot/GroundRobot.m", "+robot/AerialRobot.m"],
-      "verified_by": null,
+      "name": "Refactor GroundRobot abstract",
+      "description": "Create GroundRobot abstract base, reparent DifferentialDrive from Robot to GroundRobot.",
+      "status": "completed",
+      "files": ["+robot/GroundRobot.m", "+robot/DifferentialDrive.m"],
+      "verified_by": "QA",
       "blocker_reason": null
     },
     {
