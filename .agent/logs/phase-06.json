@@ -1,0 +1,24 @@
+{
+  "phase": "06",
+  "name": "Quadruped trunk + leg geometry",
+  "completed_at": "2026-06-08T19:00:00Z",
+  "files_created": [
+    "+robot/Quadruped.m"
+  ],
+  "files_modified": [
+    "demo.m"
+  ],
+  "adrs": ["docs/adr/0005-quadruped-trunk-and-leg-geometry.md"],
+  "bugs_fixed": [
+    "Leg edges now connect from shoulder vertices (z=0) not body corners (z=-bodyHeight/2)"
+  ],
+  "decisions": [
+    "Quadruped inherits GroundRobot with getControlDim()=6",
+    "6-element body wrench control vector",
+    "Spring-damper contact with Coulomb friction at 4 feet",
+    "Initial standing pose: bodyHeight/2 + legLength1 + legLength2 above ground"
+  ],
+  "verified_by": "QA",
+  "blockers": [],
+  "next_phase": "07"
+}

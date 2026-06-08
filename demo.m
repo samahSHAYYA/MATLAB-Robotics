@@ -21,6 +21,19 @@ function demo(robotType)
             params.dynamics.maxThrust = 2.0;
             params.dynamics.kTorque = 0.01;
             robot = Quadcopter(params);
+        case 'Quadruped'
+            params.geometry.bodyLength = 0.4;
+            params.geometry.bodyWidth = 0.2;
+            params.geometry.bodyHeight = 0.1;
+            params.geometry.legLength1 = 0.15;
+            params.geometry.legLength2 = 0.15;
+            params.geometry.shoulderWidth = 0.12;
+            params.dynamics.mass = 3.0;
+            params.dynamics.inertia = diag([0.01, 0.02, 0.015]);
+            params.dynamics.k_contact = 1000;
+            params.dynamics.b_contact = 10;
+            params.dynamics.mu = 0.8;
+            robot = Quadruped(params);
         otherwise
             error('Unknown robot type: %s', robotType);
     end

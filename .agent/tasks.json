@@ -58,9 +58,9 @@
       "id": "06",
       "name": "Quadruped body dynamics + leg geometry",
       "description": "Create Quadruped with 6-DOF trunk dynamics, 3-link leg geometry, spring-damper ground contact.",
-      "status": "pending",
+      "status": "completed",
       "files": ["+robot/Quadruped.m"],
-      "verified_by": null,
+      "verified_by": "QA",
       "blocker_reason": null
     },
     {
