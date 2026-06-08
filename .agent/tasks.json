@@ -1,0 +1,94 @@
+{
+  "phases": [
+    {
+      "id": "00",
+      "name": "Scaffold project structure",
+      "description": "Create .agent/, opencode.json, AGENTS.md, .gitignore, .gitattributes, docs/, resources/, git init.",
+      "status": "completed",
+      "files": ["opencode.json", ".gitignore", ".gitattributes", "AGENTS.md", ".agent/*", "docs/*", "resources/*"],
+      "verified_by": null,
+      "blocker_reason": null
+    },
+    {
+      "id": "01",
+      "name": "Direction + Utils + Robot (abstract) + Visualizer",
+      "description": "Create Direction enum, Utils static methods, Robot abstract handle base, Visualizer wireframe renderer.",
+      "status": "pending",
+      "files": ["+robot/Direction.m", "+robot/Utils.m", "+robot/Robot.m", "+robot/Visualizer.m"],
+      "verified_by": null,
+      "blocker_reason": null
+    },
+    {
+      "id": "02",
+      "name": "DifferentialDrive + DynamicsEngine",
+      "description": "Create DifferentialDrive robot (3-DOF planar) and DynamicsEngine (RK4 integrator).",
+      "status": "pending",
+      "files": ["+robot/DifferentialDrive.m", "+robot/DynamicsEngine.m"],
+      "verified_by": null,
+      "blocker_reason": null
+    },
+    {
+      "id": "03",
+      "name": "Controller + demo.m",
+      "description": "Create Controller (keyboard handler, real-time loop) and demo.m entry point for DifferentialDrive.",
+      "status": "pending",
+      "files": ["+robot/Controller.m", "demo.m"],
+      "verified_by": null,
+      "blocker_reason": null
+    },
+    {
+      "id": "04",
+      "name": "Quadcopter + AerialRobot",
+      "description": "Create AerialRobot abstract (full 6-DOF) and Quadcopter (rotor thrust/torque model).",
+      "status": "pending",
+      "files": ["+robot/AerialRobot.m", "+robot/Quadcopter.m"],
+      "verified_by": null,
+      "blocker_reason": null
+    },
+    {
+      "id": "05",
+      "name": "Refactor GroundRobot + AerialRobot abstracts",
+      "description": "Extract commonality into GroundRobot (planar constraint) and AerialRobot (6-DOF) abstract classes. DifferentialDrive and Quadcopter inherit respectively.",
+      "status": "pending",
+      "files": ["+robot/GroundRobot.m", "+robot/AerialRobot.m"],
+      "verified_by": null,
+      "blocker_reason": null
+    },
+    {
+      "id": "06",
+      "name": "Quadruped body dynamics + leg geometry",
+      "description": "Create Quadruped with 6-DOF trunk dynamics, 3-link leg geometry, spring-damper ground contact.",
+      "status": "pending",
+      "files": ["+robot/Quadruped.m"],
+      "verified_by": null,
+      "blocker_reason": null
+    },
+    {
+      "id": "07",
+      "name": "Quadruped IK + leg animation",
+      "description": "Implement analytic IK for 3-link legs, animate legs synchronised to body motion.",
+      "status": "pending",
+      "files": ["+robot/Quadruped.m"],
+      "verified_by": null,
+      "blocker_reason": null
+    },
+    {
+      "id": "08",
+      "name": "Quadruped trot gait + full keyboard control",
+      "description": "Implement trot gait (diagonal leg pairs), integrate with Controller for interactive control.",
+      "status": "pending",
+      "files": ["+robot/Quadruped.m", "+robot/Controller.m", "demo.m"],
+      "verified_by": null,
+      "blocker_reason": null
+    },
+    {
+      "id": "09",
+      "name": "Polish: physics tuning, visual refinements, edge cases",
+      "description": "Tune physics parameters, refine wireframe visuals, handle edge cases, final testing.",
+      "status": "pending",
+      "files": ["+robot/*.m", "demo.m"],
+      "verified_by": null,
+      "blocker_reason": null
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+# MATLAB
+*.m~
+*.mat
+*.fig
+*.slx
+*.mdl
+*.mlapp
+*.mlproj
+*.asv
+*.swp
+*.swo
+SimulinkCache/
+slprj/
+sldemo_*
+
+# Temp / OS
+.DS_Store
+Thumbs.db
+*.log
+temp/
+tmp/
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
+*.workspace
+
+# Build
+*.mex*
+*.p
+*.o
+*.obj
+*.dll
+*.so
+*.dylib
+
+# Export
+export/
+output/

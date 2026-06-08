@@ -1,0 +1,43 @@
+{
+  "phase": "00",
+  "name": "Scaffold project structure",
+  "completed_at": "2026-06-08T16:30:00Z",
+  "files_created": [
+    "opencode.json", ".gitignore", ".gitattributes", "AGENTS.md", "README.md",
+    ".agent/agents/orchestrator.md",
+    ".agent/agents/architect.md",
+    ".agent/agents/developer.md",
+    ".agent/agents/qa.md",
+    ".agent/skills/matlab-oop/skill.md + scripts",
+    ".agent/skills/robot-dynamics/skill.md + scripts",
+    ".agent/skills/wireframe/skill.md + scripts",
+    ".agent/skills/keyboard-control/skill.md + scripts",
+    ".agent/skills/quadruped-ik/skill.md + scripts",
+    ".agent/skills/task-management/skill.md",
+    ".agent/guidelines/best-practices.md",
+    ".agent/guidelines/workflow.md",
+    ".agent/guidelines/review-checklist.md",
+    ".agent/tasks.json",
+    "docs/README.md",
+    "docs/adr/templates/adr-template.md",
+    "docs/adr/scripts/new-adr.m",
+    "docs/adr/0000-use-agent-system.md",
+    "docs/guide/architecture.md",
+    "docs/guide/interaction.md",
+    "docs/guide/api.md",
+    "docs/guide/demo-guide.md",
+    "docs/guide/references.md",
+    "resources/ (images/, schemas/, models/)"
+  ],
+  "files_modified": [],
+  "decisions": [
+    "4-agent system: orchestrator, architect, developer, QA",
+    "6 skills with per-skill scripts",
+    "ADR system in docs/adr/ with template + scaffold script",
+    "docs/ split into adr/ and guide/",
+    "Phase model with 10 phases (00-09)"
+  ],
+  "verified_by": null,
+  "blockers": [],
+  "next_phase": "01"
+}
