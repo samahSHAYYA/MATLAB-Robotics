@@ -1,0 +1,125 @@
+{
+  "phase": "03",
+  "component": "Controller + demo.m",
+  "date": "2026-06-08",
+  "verdict": "PASS",
+  "checked_by": "QA",
+  "results": {
+    "Controller.m": {
+      "inherits_handle": {
+        "pass": true,
+        "detail": "classdef Controller < handle at line 1"
+      },
+      "constructor_signature": {
+        "pass": true,
+        "detail": "Constructor takes (fig, robot, visualizer) with type annotations: matlab.ui.Figure, robot.Robot, robot.Visualizer at lines 13-16"
+      },
+      "WindowKeyPressFcn": {
+        "pass": true,
+        "detail": "Binds fig.WindowKeyPressFcn (not KeyPressFcn) at line 19 — per skill guidance"
+      },
+      "CloseRequestFcn": {
+        "pass": true,
+        "detail": "Binds fig.CloseRequestFcn = @obj.onClose at line 20 for clean shutdown"
+      },
+      "run_loop": {
+        "pass": true,
+        "detail": "Real-time loop with physics sub-stepping (ceil(RenderDt/PhysicsDt) iterations per frame) at lines 23-36"
+      },
+      "drawnow_limitrate": {
+        "pass": true,
+        "detail": "Uses drawnow limitrate at line 32 (not drawnow)"
+      },
+      "run_exits_cleanly": {
+        "pass": true,
+        "detail": "while loop condition checks both obj.Running && ishandle(obj.Figure) at line 25; onClose sets Running=false and deletes figure"
+      },
+      "setCommand": {
+        "pass": true,
+        "detail": "setCommand(direction, amount) calls obj.Robot.move(direction, amount) at line 39"
+      },
+      "onKeyPress_keys": {
+        "pass": true,
+        "detail": "All 13 keys mapped: uparrow→FORWARD, downarrow→BACKWARD, leftarrow→YAW_LEFT, rightarrow→YAW_RIGHT, w→UP, s→DOWN, a→ROLL_LEFT, d→ROLL_RIGHT, q→PITCH_UP, e→PITCH_DOWN, space→STOP, r→reset, escape→close (lines 46-71)"
+      },
+      "LastKey_recorded": {
+        "pass": true,
+        "detail": "obj.LastKey = evt.Key set at line 73 after every key press"
+      },
+      "PhysicsDt_default": {
+        "pass": true,
+        "detail": "PhysicsDt default 0.005 (5 ms) at line 7"
+      },
+      "RenderDt_default": {
+        "pass": true,
+        "detail": "RenderDt default 0.02 (50 FPS / 20 ms) at line 8"
+      }
+    },
+    "demo.m": {
+      "default_argument": {
+        "pass": true,
+        "detail": "robotType defaults to 'DifferentialDrive' at line 3; callable as demo() or demo('DifferentialDrive')"
+      },
+      "params_struct": {
+        "pass": true,
+        "detail": "Creates params with geometry (wheelRadius, trackWidth) and dynamics (mass, inertia, maxTorque) at lines 10-14"
+      },
+      "figure_properties": {
+        "pass": true,
+        "detail": "Figure with white background (Color='white'), correct title (Name='matlab-robodog: DifferentialDrive') at lines 20-23"
+      },
+      "Visualizer_created": {
+        "pass": true,
+        "detail": "Creates Visualizer(ax) and calls vis.addRobot(robot) at lines 26-27"
+      },
+      "Controller_created_and_run": {
+        "pass": true,
+        "detail": "Creates Controller(fig, robot, vis) at line 29 and calls ctrl.run() at line 34"
+      },
+      "blocks_while_open": {
+        "pass": true,
+        "detail": "ctrl.run() is the blocking main loop; execution stays in run() until figure closes"
+      },
+      "prints_controls": {
+        "pass": true,
+        "detail": "fprintf at lines 32-33 prints robot type and control instructions"
+      },
+      "errors_unknown_type": {
+        "pass": true,
+        "detail": "switch otherwise at line 17: error('Unknown robot type: %s', robotType)"
+      },
+      "KeyPressFcn_disabled": {
+        "pass": true,
+        "detail": "Sets KeyPressFcn=[] at line 23 to prevent interference with WindowKeyPressFcn (set by Controller)"
+      }
+    },
+    "Integration": {
+      "all_files_parse": {
+        "pass": true,
+        "detail": "By inspection: Controller.m (81 lines), demo.m (35 lines), DifferentialDrive.m (152 lines), Visualizer.m (53 lines), Robot.m (72 lines), Direction.m (10 lines), DynamicsEngine.m (26 lines), Utils.m (44 lines) — all syntactically valid MATLAB"
+      },
+      "import_robot_works": {
+        "pass": true,
+        "detail": "import robot.* at demo.m line 6 resolves all classes in +robot/ package"
+      },
+      "DifferentialDrive_move_UP_noop": {
+        "pass": true,
+        "detail": "move() otherwise case at DifferentialDrive.m line 43 is empty — UP, DOWN, ROLL, PITCH are silently ignored for ground robot"
+      },
+      "physics_sub_stepping": {
+        "pass": true,
+        "detail": "run() sub-steps physics: ceil(0.02/0.005)=4 iterations per render frame. PhysicsDt (5 ms) << RenderDt (20 ms)"
+      },
+      "onClose_call_support": {
+        "pass": true,
+        "detail": "onClose(obj,~,~) accepts both CloseRequestFcn callback (src,evt) and bare obj.onClose() call from escape key — MATLAB tolerates omitted trailing ~ args"
+      }
+    }
+  },
+  "notes": [
+    "demo.m sets KeyPressFcn=[] in figure constructor to prevent default key handling; Controller then binds WindowKeyPressFcn. This is consistent with the keyboard-control skill guidance.",
+    "Controller.onKeyPress uses 'escape' to call obj.onClose() directly (not via CloseRequestFcn). The onClose method signature with ~ args handles both call patterns.",
+    "No ADR 0003 found for Phase 03; the implementation follows the interaction design in docs/guide/interaction.md and the keyboard-control skill."
+  ],
+  "blocker_reason": null
+}

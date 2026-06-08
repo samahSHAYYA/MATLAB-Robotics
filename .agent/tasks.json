@@ -31,9 +31,9 @@
       "id": "03",
       "name": "Controller + demo.m",
       "description": "Create Controller (keyboard handler, real-time loop) and demo.m entry point for DifferentialDrive.",
-      "status": "pending",
+      "status": "completed",
       "files": ["+robot/Controller.m", "demo.m"],
-      "verified_by": null,
+      "verified_by": "QA",
       "blocker_reason": null
     },
     {

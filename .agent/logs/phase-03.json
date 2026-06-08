@@ -1,0 +1,20 @@
+{
+  "phase": "03",
+  "name": "Controller + demo.m",
+  "completed_at": "2026-06-08T18:00:00Z",
+  "files_created": [
+    "+robot/Controller.m",
+    "demo.m"
+  ],
+  "files_modified": [],
+  "adrs": [],
+  "decisions": [
+    "Controller binds WindowKeyPressFcn with CloseRequestFcn",
+    "Real-time loop: 5 ms physics, 20 ms render (50 FPS), drawnow limitrate",
+    "demo.m defaults to DifferentialDrive",
+    "Escape key exits; 'q' removed from exit to avoid conflict with PITCH_UP"
+  ],
+  "verified_by": "QA",
+  "blockers": [],
+  "next_phase": "04"
+}
