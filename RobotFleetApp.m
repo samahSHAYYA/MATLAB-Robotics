@@ -4,7 +4,7 @@ classdef RobotFleetApp < handle
         MainGrid            matlab.ui.container.GridLayout
         ViewportGrid        matlab.ui.container.GridLayout
         AxesPanel           (:,1)
-        AxesHandle          (:,1) matlab.graphics.axis.Axes
+        AxesHandle          (:,1)
         Visualizer          (:,1) cell
         Robots              cell
         BBoxHandles         cell
@@ -28,7 +28,7 @@ classdef RobotFleetApp < handle
         SyncMode            (1,1) logical = false
         Pool                parallel.Pool
         PoolAvailable       (1,1) logical = false
-        ScriptSchedule      struct
+        ScriptSchedule
         ScriptIdx           (1,1) double = 0
         ScriptMode          (1,1) logical = false
         ScriptLabel         matlab.ui.control.Label
