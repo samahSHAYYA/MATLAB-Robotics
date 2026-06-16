@@ -9,6 +9,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
       - name: Set up MATLAB
@@ -27,8 +29,12 @@ jobs:
           command: |
             addpath('tests');
             import matlab.unittest.TestSuite;
+            import matlab.unittest.TestRunner;
+            import matlab.unittest.plugins.XMLPlugin;
             suite = TestSuite.fromPackage('robot', 'IncludingSubpackages', true);
-            results = run(suite);
+            runner = TestRunner.withTextOutput;
+            runner.addPlugin(XMLPlugin.producingJUnitFormat('TestResults.xml'));
+            results = runner.run(suite);
             fprintf('\n=== %d/%d passed, %d failed ===\n', ...
                 nnz([results.Passed]), numel(results), nnz([results.Failed]));
             assertSuccess(results);
@@ -37,5 +43,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: |
-            **/TestResults.xml
+          path: TestResults.xml
