@@ -116,6 +116,15 @@
       "files": ["+robot/Humanoid.m", "+robot/Controller.m", "startRobot.m"],
       "verified_by": "developer",
       "blocker_reason": null
+    },
+    {
+      "id": "13",
+      "name": "Visual overhaul + fleet app",
+      "description": "Colored 3D bodies for all 4 robots, RobotFleetApp dashboard, Collision.buildOBB, Robot.Id property.",
+      "status": "completed",
+      "files": ["+robot/Humanoid.m", "+robot/Quadruped.m", "+robot/Quadcopter.m", "+robot/DifferentialDrive.m", "+robot/Collision.m", "+robot/Robot.m", "RobotFleetApp.m", "docs/adr/0013-robot-fleet-app.md"],
+      "verified_by": "developer",
+      "blocker_reason": null
     }
   ]
 }

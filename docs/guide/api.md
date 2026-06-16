@@ -95,4 +95,13 @@ getControlDim()               → returns 6
 checkOBB(centerA, quatA, halfA, centerB, quatB, halfB) → SAT overlap test
 robotOBB(robot)               → get OBB center + half-size from robot
 checkAll(robots, useParallel)  → pairwise collision matrix
+buildOBB(robot)               → [8×3 vertices, 12×2 edges] world-frame OBB
 ```
+
+## `RobotFleetApp` (multi-robot dashboard)
+
+```
+RobotFleetApp()                → open fleet command center (uifigure)
+```
+
+See `docs/adr/0013-robot-fleet-app.md` for architecture details.

@@ -3,7 +3,7 @@ classdef RobotFleetApp < handle
         Figure              matlab.ui.Figure
         MainGrid            matlab.ui.container.GridLayout
         ViewportGrid        matlab.ui.container.GridLayout
-        AxesPanel           (:,1) matlab.ui.container.Panel
+        AxesPanel           (:,1)
         AxesHandle          (:,1) matlab.graphics.axis.Axes
         Visualizer          (:,1) cell
         Robots              cell
