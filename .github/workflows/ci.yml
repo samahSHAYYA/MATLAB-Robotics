@@ -32,6 +32,7 @@ jobs:
             import matlab.unittest.TestRunner;
             import matlab.unittest.plugins.XMLPlugin;
             suite = TestSuite.fromPackage('robot', 'IncludingSubpackages', true);
+            suite = [suite; TestSuite.fromClass(?RobotFleetAppTest)];
             runner = TestRunner.withTextOutput;
             runner.addPlugin(XMLPlugin.producingJUnitFormat('TestResults.xml'));
             results = runner.run(suite);
