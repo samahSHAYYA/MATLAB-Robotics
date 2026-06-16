@@ -63,6 +63,7 @@ classdef Humanoid < robot.GroundRobot
             validateattributes(obj.footLength, {'double'}, {'scalar', 'positive'});
             validateattributes(obj.mass, {'double'}, {'scalar', 'positive'});
             obj.Control = zeros(6, 1);
+            obj.InitialControl = obj.Control;
             obj.State(3) = obj.thighLength + obj.shinLength;
             obj.InitialState = obj.State;
 
@@ -127,6 +128,7 @@ classdef Humanoid < robot.GroundRobot
                     obj.Control = [0; 0; 0; 0; -T; 0];
                 case robot.Direction.STOP
                     obj.Control = zeros(6, 1);
+                    obj.State(8:13) = 0;
                 case robot.Direction.RESET
                     obj.reset();
                 otherwise

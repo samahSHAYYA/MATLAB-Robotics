@@ -51,6 +51,7 @@ classdef DifferentialDrive < robot.GroundRobot
                     obj.Control = [ amount; -amount];
                 case robot.Direction.STOP
                     obj.Control = [0; 0];
+                    obj.State(8:13) = 0;
                 case robot.Direction.RESET
                     obj.reset();
                 otherwise

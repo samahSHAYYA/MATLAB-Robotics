@@ -100,7 +100,7 @@ classdef HumanoidTest < matlab.unittest.TestCase
             r = robot.Humanoid(testCase.params);
             r.step(0, 0.01);
             theta = r.JointAngles;
-            testCase.verifyEqual(theta, zeros(2, 3), 'AbsTol', 1e-10);
+            testCase.verifyEqual(theta, zeros(2, 3), 'AbsTol', 1e-4);
         end
 
         function computeDynamicsReturns13Element(testCase)

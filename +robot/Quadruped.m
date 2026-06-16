@@ -61,6 +61,7 @@ classdef Quadruped < robot.GroundRobot
             validateattributes(obj.legLength2, {'double'}, {'scalar', 'positive'});
             validateattributes(obj.mass, {'double'}, {'scalar', 'positive'});
             obj.Control = zeros(6, 1);
+            obj.InitialControl = obj.Control;
             obj.State(3) = obj.bodyHeight/2 + obj.legLength1 + obj.legLength2;
             obj.InitialState = obj.State;
 
@@ -131,6 +132,7 @@ classdef Quadruped < robot.GroundRobot
                     obj.Control = [0; 0; 0; 0; -T; 0];
                 case robot.Direction.STOP
                     obj.Control = zeros(6, 1);
+                    obj.State(8:13) = 0;
                 case robot.Direction.RESET
                     obj.reset();
                 otherwise

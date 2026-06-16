@@ -101,6 +101,7 @@ classdef Quadcopter < robot.AerialRobot
                     obj.DesiredRoll = 0;
                     obj.DesiredYawRate = 0;
                     obj.DesiredVerticalThrust = hover;
+                    obj.State(8:13) = 0;
                 case robot.Direction.RESET
                     obj.reset();
                     return;

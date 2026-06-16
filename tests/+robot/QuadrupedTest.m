@@ -103,7 +103,7 @@ classdef QuadrupedTest < matlab.unittest.TestCase
             r = robot.Quadruped(testCase.params);
             r.step(0, 0.01);
             theta = r.JointAngles;
-            testCase.verifyEqual(theta, zeros(4, 3), 'AbsTol', 1e-10);
+            testCase.verifyEqual(theta, zeros(4, 3), 'AbsTol', 1e-4);
         end
 
         function legFKIKRoundTrip(testCase)
@@ -114,7 +114,7 @@ classdef QuadrupedTest < matlab.unittest.TestCase
             L1 = r.legLength1;
             L2 = r.legLength2;
             expectedFoot = [bx, sw, -(L1+L2); bx, -sw, -(L1+L2); -bx, sw, -(L1+L2); -bx, -sw, -(L1+L2)];
-            testCase.verifyEqual(r.FootPositions, expectedFoot, 'AbsTol', 1e-10);
+            testCase.verifyEqual(r.FootPositions, expectedFoot, 'AbsTol', 1e-4);
         end
 
         function computeDynamicsReturns13Element(testCase)

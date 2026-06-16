@@ -58,7 +58,7 @@ classdef CollisionTest < matlab.unittest.TestCase
         end
 
         function edgeEdgeOverlap(testCase)
-            qB = CollisionTest.quatFromAxisAngle(pi/4, [0;1;0]);
+            qB = robot.CollisionTest.quatFromAxisAngle(pi/4, [0;1;0]);
             hit = robot.Collision.checkOBB([-0.1;0;0.1], testCase.identityQuat, testCase.halfSize, ...
                                            [0.1;0;-0.1], qB, testCase.halfSize);
             testCase.verifyTrue(hit);

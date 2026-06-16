@@ -1,15 +1,15 @@
 function results = runAll
     addpath('tests');
-    suite = testsuite('tests');
+    suite = matlab.unittest.TestSuite.fromPackage('robot', 'IncludingSubpackages', true);
     results = run(suite);
-    disp(table(results));
-    total = sum([results.Details.Duration]);
-    fprintf('\nTotal: %d passed, %d failed, %d incomplete (%.2f s)\n', ...
-        nnz([results.Passed]), nnz([results.Failed]), nnz([results.Incomplete]), total);
-    if any([results.Failed])
-        fprintf('\nFAILED TESTS:\n');
+    total = numel(results);
+    passed = nnz([results.Passed]);
+    failed = nnz([results.Failed]);
+    fprintf('\n=== %d/%d passed, %d failed ===\n', passed, total, failed);
+    if failed > 0
+        fprintf('\nFAILED:\n');
         for i = find([results.Failed])
-            fprintf('  %s: %s\n', results(i).Name, results(i).Details.DiagnosticRecord);
+            fprintf('  %s\n', results(i).Name);
         end
     end
 end

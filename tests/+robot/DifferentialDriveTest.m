@@ -68,7 +68,7 @@ classdef DifferentialDriveTest < matlab.unittest.TestCase
         function computeDynamicsWithDriveChangesState(testCase)
             r = robot.DifferentialDrive(testCase.params);
             dstate = r.computeDynamics(0, r.State, [0.5; 0.5]);
-            testCase.verifyNotEqual(dstate(8), 0, 'AbsTol', 1e-12);
+            testCase.verifyGreaterThan(abs(dstate(8)), 0);
         end
 
         function stepAdvancesState(testCase)

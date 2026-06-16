@@ -11,6 +11,7 @@ classdef Robot < handle
         State               (13,1) double
         Control             (:,1) double
         InitialState        (13,1) double
+        InitialControl      (:,1) double
         GraphicsTransform
     end
 
@@ -38,6 +39,7 @@ classdef Robot < handle
             obj.State = [0; 0; 0; 1; 0; 0; 0; 0; 0; 0; 0; 0; 0];
             obj.InitialState = obj.State;
             obj.Control = [];
+            obj.InitialControl = obj.Control;
             obj.Pose = struct('position', [0; 0; 0], 'orientation', [0; 0; 0]);
             obj.updatePoseFromState();
         end
@@ -58,7 +60,7 @@ classdef Robot < handle
         function reset(obj)
             %RESET  Restore state and control to initial conditions.
             obj.State = obj.InitialState;
-            obj.Control = [];
+            obj.Control = obj.InitialControl;
             obj.updatePoseFromState();
         end
 

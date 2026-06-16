@@ -7,6 +7,7 @@ classdef AerialRobot < robot.Robot
             %AERIALROBOT  Construct with 4-element zero control.
             obj@robot.Robot();
             obj.Control = zeros(4, 1);
+            obj.InitialControl = obj.Control;
         end
 
         function step(obj, t, dt)

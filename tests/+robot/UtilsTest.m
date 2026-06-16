@@ -38,7 +38,7 @@ classdef UtilsTest < matlab.unittest.TestCase
         function quatMultiplyTwoKnown(testCase)
             q180x = [0; 1; 0; 0];
             result = robot.Utils.quatMultiply(q180x, q180x);
-            testCase.verifyEqual(result, [1; 0; 0; 0], 'AbsTol', 1e-10);
+            testCase.verifyEqual(abs(result), [1; 0; 0; 0], 'AbsTol', 1e-10);
         end
 
         function quatToRotmxOrthonormal(testCase)

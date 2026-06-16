@@ -9,6 +9,7 @@ classdef GroundRobot < robot.Robot
             %GROUNDROBOT  Construct with default 2-element zero control.
             obj@robot.Robot();
             obj.Control = zeros(2, 1);
+            obj.InitialControl = obj.Control;
         end
 
         function step(obj, t, dt)

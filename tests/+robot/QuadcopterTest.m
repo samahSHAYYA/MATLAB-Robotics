@@ -63,6 +63,7 @@ classdef QuadcopterTest < matlab.unittest.TestCase
 
         function stepAdvancesState(testCase)
             r = robot.Quadcopter(testCase.params);
+            r.State(8:10) = [1; 0; 0];
             s0 = r.State;
             r.step(0, 0.01);
             testCase.verifyNotEqual(r.State, s0);

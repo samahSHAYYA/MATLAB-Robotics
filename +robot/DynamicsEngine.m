@@ -35,7 +35,7 @@ classdef (Sealed) DynamicsEngine
             state = state0;
             t = t0;
             for k = 2:N
-                state = DynamicsEngine.rk4Step(dynFun, t, state, control, dt);
+                state = robot.DynamicsEngine.rk4Step(dynFun, t, state, control, dt);
                 states(k, :) = state';
                 t = t + dt;
             end
