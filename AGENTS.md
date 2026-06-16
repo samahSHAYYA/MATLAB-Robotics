@@ -25,6 +25,7 @@ startRobot('Humanoid')             % bipedal walking
 | `docs/adr/` | Architecture Decision Records — read before any design work |
 | `docs/guide/` | Architecture, interaction, API, demo guide, references |
 | `resources/` | Images, schemas, 3D models for MATLAB visualization |
+| `.githooks/` | Git hooks (pre-commit, commit-msg, pre-push) — enable with `git config core.hooksPath .githooks` |
 
 ## Build phases
 
@@ -37,14 +38,15 @@ See `.agent/tasks.json` for live status. Current phase: 00 (scaffold complete).
 3. **Skills load before work** — load the relevant skill for your domain before writing code.
 4. **No force push, no amend** — each phase is one clean commit on `master`.
 5. **QA signs off** — no phase is complete until QA verifies it.
+6. **Git hooks** — run `git config core.hooksPath .githooks` once after clone to enable pre-commit, commit-msg, and pre-push checks.
 
 ## MATLAB quirks
 
 - Must inherit `handle` for mutable state.
 - Use `WindowKeyPressFcn` (not `KeyPressFcn`) for keyboard capture.
 - `hgtransform` + `Matrix` property for fast wireframe transforms.
-- `drawnow limitrate` not `drawnow` in animation loops.
-- Quaternion type built-in from R2018b+; this project is R2025.
+- `drawnow` + `pause` throttling for animation loops (not `drawnow limitrate`).
+- Quaternion operations use manual formulas in `robot.Utils` (no built-in `quaternion` class dependency for cross-version compatibility).
 - Package `+robot/` means `import robot.*` at top of all consuming scripts.
 
 ## Agents

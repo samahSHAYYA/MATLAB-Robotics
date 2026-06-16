@@ -1,0 +1,31 @@
+#!/bin/sh
+# commit-msg: validate commit message format
+
+MSG_FILE="$1"
+MSG=$(cat "$MSG_FILE")
+
+# Strip comment lines (#) that git adds automatically
+MSG=$(echo "$MSG" | grep -v '^#')
+
+LINES=$(echo "$MSG" | grep -c .)
+FIRST_LINE=$(echo "$MSG" | head -1)
+
+# 1. Not empty
+if [ ${#FIRST_LINE} -lt 4 ]; then
+    echo "ERROR: Commit message too short (minimum 4 characters)"
+    exit 1
+fi
+
+# 2. Not a single word (likely accidental)
+WORD_COUNT=$(echo "$FIRST_LINE" | wc -w)
+if [ "$WORD_COUNT" -lt 2 ]; then
+    echo "ERROR: Commit message is a single word — be more descriptive"
+    exit 1
+fi
+
+# 3. First line should be 72 chars or fewer (git convention)
+if [ ${#FIRST_LINE} -gt 72 ]; then
+    echo "WARNING: First line over 72 characters (${#FIRST_LINE})"
+fi
+
+exit 0

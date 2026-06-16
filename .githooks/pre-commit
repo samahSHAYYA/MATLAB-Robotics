@@ -1,0 +1,57 @@
+#!/bin/sh
+# pre-commit: lightweight file checks (no MATLAB required)
+
+echo "=== pre-commit: running checks..."
+
+FAILED=0
+
+# 1. No MATLAB editor backup files
+staged=$(git diff --cached --name-only --diff-filter=A |
+         grep -c '\.m~$' 2>/dev/null)
+if [ "$staged" -gt 0 ]; then
+    echo "ERROR: Found .m~ backup files staged. Remove them before commit."
+    git diff --cached --name-only --diff-filter=A | grep '\.m~$'
+    FAILED=1
+fi
+
+# 2. No trailing whitespace in .m files
+for f in $(git diff --cached --name-only --diff-filter=AM | grep '\.m$'); do
+    if [ -f "$f" ] && grep -l '[[:space:]]$' "$f" >/dev/null 2>&1; then
+        echo "WARNING: Trailing whitespace in $f"
+    fi
+done
+
+# 3. No tabs in .m files (MATLAB convention: spaces)
+for f in $(git diff --cached --name-only --diff-filter=AM | grep '\.m$'); do
+    if [ -f "$f" ] && grep -l '	' "$f" >/dev/null 2>&1; then
+        echo "ERROR: Tab character found in $f (use 4 spaces instead)"
+        FAILED=1
+    fi
+done
+
+# 4. Class name matches filename for +robot source files
+for f in $(git diff --cached --name-only --diff-filter=AM |
+           grep '^+robot/[A-Z][A-Za-z]*\.m$'); do
+    basename=$(basename "$f" .m)
+    if [ -f "$f" ] && ! grep -q "classdef $basename" "$f" 2>/dev/null; then
+        echo "ERROR: $f: classdef name '$basename' not found"
+        FAILED=1
+    fi
+done
+
+# 5. No large files (>500 KB) staged
+for f in $(git diff --cached --name-only --diff-filter=A); do
+    if [ -f "$f" ]; then
+        size=$(wc -c < "$f")
+        if [ "$size" -gt 512000 ]; then
+            echo "ERROR: Large file staged ($((size/1024)) KB): $f"
+            FAILED=1
+        fi
+    fi
+done
+
+if [ "$FAILED" -ne 0 ]; then
+    echo "=== pre-commit: FAILED — fix errors and retry ==="
+    exit 1
+fi
+echo "=== pre-commit: all checks passed ==="
