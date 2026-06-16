@@ -108,7 +108,7 @@ classdef DifferentialDrive < robot.GroundRobot
             edges = [be; we + nBody; we + nBody + nLeft];
         end
 
-        function dstate = computeDynamics(obj, t, state, control)
+        function dstate = computeDynamics(obj, ~, state, control)
             %COMPUTEDYNAMICS  Planar drive: forward force + yaw torque.
             %   F_drive = (tau_L + tau_R) / r_wheel
             %   T_yaw   = (tau_R - tau_L) * trackWidth / (2 * r_wheel)

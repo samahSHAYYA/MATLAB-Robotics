@@ -48,7 +48,7 @@ classdef Visualizer < handle
             obj.Robots{end + 1} = rbt;
         end
 
-        function update(obj, rbt)
+        function update(~, rbt)
             %UPDATE  Update the robot's 4×4 transform from its current state.
             %   Computes R = quatToRotmx(State(4:7)), extracts position
             %   from State(1:3), and applies the result to the robot's

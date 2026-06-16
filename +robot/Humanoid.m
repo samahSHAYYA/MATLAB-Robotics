@@ -181,8 +181,6 @@ classdef Humanoid < robot.GroundRobot
 
             obj.initFootBoxVerts();
             fvBox = [squeeze(obj.FootBoxVerts(1, :, :)); squeeze(obj.FootBoxVerts(2, :, :))];
-            nFootBox = size(fvBox, 1);
-
             boxFaces = zeros(12, 4);
             for i = 1:2
                 base = nBody + nHip + nKnee + nAnkle + (i-1)*8;
@@ -216,7 +214,7 @@ classdef Humanoid < robot.GroundRobot
             edges = [be; le; fe];
         end
 
-        function dstate = computeDynamics(obj, t, state, control)
+        function dstate = computeDynamics(obj, ~, state, control)
             q = quaternion(state(4:7)');
             vel = state(8:10);
             omega = state(11:13);
@@ -308,7 +306,7 @@ classdef Humanoid < robot.GroundRobot
 
         function hg = plot(obj, ax)
             hg = plot@robot.Robot(obj, ax);
-            [verts, faces, edges] = obj.buildGeometry();
+            [verts, faces, ~] = obj.buildGeometry();
 
             patch('Parent', hg, 'Vertices', verts, 'Faces', faces, ...
                   'FaceColor', [0.7 0.8 0.7], 'EdgeColor', 'none');
@@ -321,7 +319,6 @@ classdef Humanoid < robot.GroundRobot
             hipPos = [-hw, 0, 0; hw, 0, 0];
 
             nAnkle = nBody + nHip + nKnee;
-            nBeforeFeet = nBody + nHip + nKnee + nAnkle;
             for i = 1:2
                 hipIdx = nBody + i;
                 kneeIdx = nBody + nHip + i;
@@ -367,7 +364,7 @@ classdef Humanoid < robot.GroundRobot
     end
 
     methods (Access = protected)
-        function n = getControlDim(obj)
+        function n = getControlDim(~)
             n = 6;
         end
     end

@@ -21,16 +21,21 @@ classdef Collision
             d = centerB(:) - centerA(:);
 
             % Build list of test axes (unique, normalized)
-            axes = [RA(:,1), RA(:,2), RA(:,3), ...
-                    RB(:,1), RB(:,2), RB(:,3)];
+            axes = zeros(3, 15);
+            k = 0;
+            for i = 1:3
+                k = k + 1; axes(:, k) = RA(:, i);
+                k = k + 1; axes(:, k) = RB(:, i);
+            end
             for i = 1:3
                 for j = 1:3
                     ax = cross(RA(:,i), RB(:,j));
                     if norm(ax) > 1e-10
-                        axes = [axes, ax / norm(ax)];
+                        k = k + 1; axes(:, k) = ax / norm(ax);
                     end
                 end
             end
+            axes = axes(:, 1:k);
 
             for k = 1:size(axes, 2)
                 n = axes(:,k);
@@ -93,11 +98,13 @@ classdef Collision
             N = numel(robots);
             pairs = false(N, N);
 
-            % Pre-extract OBB data so workers don't serialize handles
-            cen = cell(N,1); qua = cell(N,1); hal = cell(N,1);
+            % Pre-extract OBB data as numeric arrays for parfor slicing
+            cenM = zeros(3, N); quaM = zeros(4, N); halM = zeros(3, N);
             for i = 1:N
-                [cen{i}, hal{i}] = robot.Collision.robotOBB(robots{i});
-                qua{i} = robots{i}.State(4:7);
+                [c, h] = robot.Collision.robotOBB(robots{i});
+                cenM(:, i) = c;
+                halM(:, i) = h;
+                quaM(:, i) = robots{i}.State(4:7);
             end
 
             % Build pair list
@@ -115,27 +122,33 @@ classdef Collision
 
             results = false(nPairs,1);
 
+            % Build pair-indexed arrays so parfor can slice them
+            cA = zeros(3, nPairs); qA = zeros(4, nPairs); hA = zeros(3, nPairs);
+            cB = zeros(3, nPairs); qB = zeros(4, nPairs); hB = zeros(3, nPairs);
+            for k = 1:nPairs
+                ii = iList(k); jj = jList(k);
+                cA(:,k) = cenM(:, ii); qA(:,k) = quaM(:, ii); hA(:,k) = halM(:, ii);
+                cB(:,k) = cenM(:, jj); qB(:,k) = quaM(:, jj); hB(:,k) = halM(:, jj);
+            end
+
             if useParallel
                 try
                     parfor k = 1:nPairs
-                        ii = iList(k); jj = jList(k);
                         results(k) = robot.Collision.checkOBB(...
-                            cen{ii}, qua{ii}, hal{ii}, cen{jj}, qua{jj}, hal{jj});
+                            cA(:,k), qA(:,k), hA(:,k), cB(:,k), qB(:,k), hB(:,k));
                     end
                 catch ME
                     warning('Collision:ParforFailed', ...
                         'parfor failed (%s), falling back to serial.', ME.message);
                     for k = 1:nPairs
-                        ii = iList(k); jj = jList(k);
                         results(k) = robot.Collision.checkOBB(...
-                            cen{ii}, qua{ii}, hal{ii}, cen{jj}, qua{jj}, hal{jj});
+                            cA(:,k), qA(:,k), hA(:,k), cB(:,k), qB(:,k), hB(:,k));
                     end
                 end
             else
                 for k = 1:nPairs
-                    ii = iList(k); jj = jList(k);
                     results(k) = robot.Collision.checkOBB(...
-                        cen{ii}, qua{ii}, hal{ii}, cen{jj}, qua{jj}, hal{jj});
+                        cA(:,k), qA(:,k), hA(:,k), cB(:,k), qB(:,k), hB(:,k));
                 end
             end
 

@@ -33,7 +33,7 @@ classdef GroundRobot < robot.Robot
     end
 
     methods (Access = protected)
-        function n = getControlDim(obj)
+        function n = getControlDim(~)
             %GETCONTROLDIM  Control vector dimension (override for n ≠ 2).
             n = 2;
         end

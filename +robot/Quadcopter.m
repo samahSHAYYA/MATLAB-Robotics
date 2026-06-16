@@ -220,7 +220,7 @@ classdef Quadcopter < robot.AerialRobot
             edges = [be; ae; de];
         end
 
-        function dstate = computeDynamics(obj, t, state, control)
+        function dstate = computeDynamics(obj, ~, state, control)
             %COMPUTEDYNAMICS  Rigid-body dynamics with motor forces and
             %                 aerodynamic damping plus ground contact.
             %   State: [pos; quat; vel; omega]

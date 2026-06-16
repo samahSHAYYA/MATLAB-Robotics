@@ -44,15 +44,11 @@ classdef Robot < handle
             obj.updatePoseFromState();
         end
 
-        function step(obj, t, dt)
-            %STEP  Advance one physics time-step (no-op base version).
-            %   Override in subclasses (AerialRobot, GroundRobot) to
-            %   integrate computeDynamics() via RK4.
-            %   Inputs: t  - current time (s), dt - step size (s)
+        function step(obj, ~, ~)
             arguments
                 obj
-                t (1,1) double
-                dt (1,1) double
+                ~
+                ~
             end
             obj.updatePoseFromState();
         end

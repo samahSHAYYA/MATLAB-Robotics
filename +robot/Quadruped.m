@@ -206,7 +206,7 @@ classdef Quadruped < robot.GroundRobot
             edges = [be; le];
         end
 
-        function dstate = computeDynamics(obj, t, state, control)
+        function dstate = computeDynamics(obj, ~, state, control)
             %COMPUTEDYNAMICS  Rigid-body dynamics with foot-ground contact.
             %   For each foot below z=0, applies a penalty-based spring-
             %   damper normal force and Coulomb friction.  Contact wrench
@@ -274,7 +274,7 @@ classdef Quadruped < robot.GroundRobot
             %PLOT  Build full quadruped visual: body, legs, shoulder/knee
             %       cylinders, red nose indicator.
             hg = plot@robot.Robot(obj, ax);
-            [verts, faces, edges] = obj.buildGeometry();
+            [verts, faces, ~] = obj.buildGeometry();
 
             patch('Parent', hg, 'Vertices', verts, 'Faces', faces, ...
                   'FaceColor', [0.7 0.8 0.7], 'EdgeColor', 'none');
@@ -337,7 +337,7 @@ classdef Quadruped < robot.GroundRobot
     end
 
     methods (Access = protected)
-        function n = getControlDim(obj)
+        function n = getControlDim(~)
             n = 6;
         end
     end
