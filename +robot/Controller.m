@@ -62,6 +62,7 @@ classdef Controller < handle
             t = 0;
             while obj.Running && ishandle(obj.Figure)
                 drawnow;
+                if ~obj.Running; break; end
                 obj.Robot.move(obj.DesiredDirection, obj.DesiredAmount);
                 tic;
                 for i = 1:ceil(obj.RenderDt / obj.PhysicsDt)
@@ -85,6 +86,7 @@ classdef Controller < handle
                 elapsed = toc;
                 pause(max(0, obj.RenderDt - elapsed));
             end
+            delete(obj.Figure);
         end
 
         function setCommand(obj, direction, amount)
