@@ -39,7 +39,7 @@ if command -v matlab >/dev/null 2>&1; then
         exit 1
     fi
     echo "Running tests..."
-    matlab -batch "addpath('tests'); import matlab.unittest.TestSuite; suite = TestSuite.fromPackage('robot', 'IncludingSubpackages', true); suite = [suite; TestSuite.fromClass(?RobotFleetAppTest)]; results = run(suite); assertSuccess(results);"
+    matlab -batch "addpath('tests'); import matlab.unittest.TestSuite; results = run(TestSuite.fromPackage('robot', 'IncludingSubpackages', true)); results = [results, run(TestSuite.fromClass(?RobotFleetAppTest))]; assertSuccess(results);"
     if [ $? -ne 0 ]; then
         echo "ERROR: Tests failed — fix before pushing"
         exit 1
