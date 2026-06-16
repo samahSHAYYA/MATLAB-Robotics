@@ -29,10 +29,12 @@ classdef (Sealed) Utils
             %   qOut = robot.Utils.quatMultiply(q1, q2)
             %   Inputs:  q1, q2 - [w,x,y,z]' unit quaternions
             %   Outputs: qOut   - [w,x,y,z]' = q1 * q2
-            q1_obj = quaternion(q1(1), q1(2), q1(3), q1(4));
-            q2_obj = quaternion(q2(1), q2(2), q2(3), q2(4));
-            qOut_obj = q1_obj * q2_obj;
-            qOut = compact(qOut_obj)';
+            w1 = q1(1); x1 = q1(2); y1 = q1(3); z1 = q1(4);
+            w2 = q2(1); x2 = q2(2); y2 = q2(3); z2 = q2(4);
+            qOut = [w1*w2 - x1*x2 - y1*y2 - z1*z2;
+                    w1*x2 + x1*w2 + y1*z2 - z1*y2;
+                    w1*y2 - x1*z2 + y1*w2 + z1*x2;
+                    w1*z2 + x1*y2 - y1*x2 + z1*w2];
         end
 
         function R = quatToRotmx(q)
@@ -41,8 +43,18 @@ classdef (Sealed) Utils
             %   Uses point convention (rotates points, not frames).
             %   Inputs:  q - [w,x,y,z]' unit quaternion
             %   Outputs: R - 3x3 rotation matrix
-            q_obj = quaternion(q(1), q(2), q(3), q(4));
-            R = rotmat(q_obj, 'point');
+            n = norm(q);
+            if n < 1e-15
+                R = eye(3);
+                return;
+            end
+            w = q(1)/n; x = q(2)/n; y = q(3)/n; z = q(4)/n;
+            xx = x*x; yy = y*y; zz = z*z;
+            xy = x*y; xz = x*z; yz = y*z;
+            wx = w*x; wy = w*y; wz = w*z;
+            R = [1-2*(yy+zz), 2*(xy-wz),   2*(xz+wy);
+                 2*(xy+wz),   1-2*(xx+zz), 2*(yz-wx);
+                 2*(xz-wy),   2*(yz+wx),   1-2*(xx+yy)];
         end
 
         function [roll, pitch, yaw] = rotmxToRPY(R)
