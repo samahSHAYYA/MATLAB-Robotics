@@ -215,10 +215,10 @@ classdef Humanoid < robot.GroundRobot
         end
 
         function dstate = computeDynamics(obj, ~, state, control)
-            q = quaternion(state(4:7)');
+            q = state(4:7);
             vel = state(8:10);
             omega = state(11:13);
-            R = rotmat(q, 'point');
+            R = robot.Utils.quatToRotmx(q);
 
             g_world = [0; 0; -9.81];
             g_body = R' * g_world;
@@ -294,8 +294,8 @@ classdef Humanoid < robot.GroundRobot
 
             dpos = R * vel;
 
-            omegaQ = quaternion(0, omega(1), omega(2), omega(3));
-            dq = compact(0.5 * q * omegaQ)';
+            omegaQ = [0; omega(1); omega(2); omega(3)];
+            dq = 0.5 * robot.Utils.quatMultiply(q, omegaQ);
 
             dstate = [dpos; dq; dvel; domega];
             if any(~isfinite(dstate))

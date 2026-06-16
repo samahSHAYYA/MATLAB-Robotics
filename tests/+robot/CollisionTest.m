@@ -113,7 +113,12 @@ classdef CollisionTest < matlab.unittest.TestCase
         end
 
         function checkAllParallel(testCase)
-            testCase.assumeNotEmpty(gcp('nocreate'), ...
+            try
+                pool = gcp('nocreate');
+            catch
+                pool = [];
+            end
+            testCase.assumeNotEmpty(pool, ...
                 'Parallel pool required — skipping');
             p = struct();
             p.geometric.armLength = 0.2;

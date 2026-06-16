@@ -124,9 +124,9 @@ classdef Quadcopter < robot.AerialRobot
             %   DesiredPitch/DesiredRoll/DesiredYawRate, computes torques
             %   with PD law, and distributes as differential thrust.
             %   Outputs: T - 4×1 motor thrusts [0, maxThrust]
-            q = quaternion(obj.State(4:7)');
+            q = obj.State(4:7);
             omega = obj.State(11:13);
-            R = rotmat(q, 'point');
+            R = robot.Utils.quatToRotmx(q);
 
             pitch = atan2(-R(3,1), sqrt(R(3,2)^2 + R(3,3)^2));
             roll  = atan2(R(3,2), R(3,3));
@@ -228,10 +228,10 @@ classdef Quadcopter < robot.AerialRobot
             %   Includes: gravity, rotor forces/torques, drag torque
             %   damping (-0.005*omega), velocity drag (-0.5*vel),
             %   and ground spring-damper at z<0.02.
-            q = quaternion(state(4:7)');
+            q = state(4:7);
             vel = state(8:10);
             omega = state(11:13);
-            R = rotmat(q, 'point');
+            R = robot.Utils.quatToRotmx(q);
 
             L = obj.armLength;
             r1 = [ L; -L; 0];
@@ -276,8 +276,8 @@ classdef Quadcopter < robot.AerialRobot
 
             dpos = R * vel;
 
-            omegaQ = quaternion(0, omega(1), omega(2), omega(3));
-            dq = compact(0.5 * q * omegaQ)';
+            omegaQ = [0; omega(1); omega(2); omega(3)];
+            dq = 0.5 * robot.Utils.quatMultiply(q, omegaQ);
 
             dstate = [dpos; dq; dvel; domega];
         end
