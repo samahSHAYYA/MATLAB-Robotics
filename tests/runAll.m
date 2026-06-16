@@ -1,6 +1,8 @@
 function results = runAll
     addpath('tests');
     suite = matlab.unittest.TestSuite.fromPackage('robot', 'IncludingSubpackages', true);
+    fleetSuite = matlab.unittest.TestSuite.fromClass(?RobotFleetAppTest);
+    suite = [suite; fleetSuite];
     results = run(suite);
     total = numel(results);
     passed = nnz([results.Passed]);

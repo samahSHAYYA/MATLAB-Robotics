@@ -11,13 +11,14 @@ classdef RobotFleetApp < handle
         BBoxVisible         (:,1) logical
         RobotVisible        (:,1) logical
         SelectedIdx         (1,1) double = 0
+        LegendGrid
         LegendCheckboxes    struct
-        BBoxCheckboxes      struct
         CtrlModeBtn
         TelemetryGrid       matlab.ui.container.GridLayout
-        TelemetryLabels     struct
+        TelemetryLabels     struct = struct()
         StatusLabel
         FPSLabel
+        PoolLabel
         SimTimer            timer
         PhysicsDt           (1,1) double = 0.005
         RenderDt            (1,1) double = 0.033
@@ -74,11 +75,11 @@ classdef RobotFleetApp < handle
                 'Padding', [5 5 5 5], 'RowSpacing', 4);
 
             dd = uidropdown(gl, 'Items', {'DifferentialDrive', 'Quadcopter', 'Quadruped', 'Humanoid'});
-            btnAdd = uibutton(gl, 'push', 'Text', '+ Spawn', ...
+            uibutton(gl, 'push', 'Text', '+ Spawn', ...
                 'ButtonPushedFcn', @(~,~) app.spawnRobot(dd.Value));
-            btnRemove = uibutton(gl, 'push', 'Text', '- Remove Selected', ...
+            uibutton(gl, 'push', 'Text', '- Remove Selected', ...
                 'ButtonPushedFcn', @(~,~) app.removeRobot(app.SelectedIdx));
-            btnLoad = uibutton(gl, 'push', 'Text', 'Load Script CSV...', ...
+            uibutton(gl, 'push', 'Text', 'Load Script CSV...', ...
                 'ButtonPushedFcn', @(~,~) app.loadScript());
             app.ScriptLabel = uilabel(gl, 'Text', '', 'FontSize', 11, ...
                 'FontColor', [0.3 0.3 0.3]);
@@ -166,17 +167,15 @@ classdef RobotFleetApp < handle
                 btn.Layout.Row = positions{j}(1); btn.Layout.Column = positions{j}(2);
             end
 
-            uibutton(gl, 'push', 'Text', 'Formation: Line', ...
+            btnLine = uibutton(gl, 'push', 'Text', 'Formation: Line', ...
                 'ButtonPushedFcn', @(~,~) app.setFormation('line'));
-            uibutton(gl, 'push', 'Text', 'Formation: Grid', ...
+            btnLine.Layout.Row = 5; btnLine.Layout.Column = [1 3];
+            btnGrid = uibutton(gl, 'push', 'Text', 'Formation: Grid', ...
                 'ButtonPushedFcn', @(~,~) app.setFormation('grid'));
-            uibutton(gl, 'push', 'Text', 'Reset All', ...
+            btnGrid.Layout.Row = 6; btnGrid.Layout.Column = [1 3];
+            btnReset = uibutton(gl, 'push', 'Text', 'Reset All', ...
                 'ButtonPushedFcn', @(~,~) app.resetAll());
-            [~,idx] = sort([2 3 1]); % layout row 5-6
-            btns = gl.Children(end-2:end);
-            for j = 1:3
-                btns(j).Layout.Row = 5+idx(j); btns(j).Layout.Column = [1 3];
-            end
+            btnReset.Layout.Row = 7; btnReset.Layout.Column = [1 3];
         end
 
         function buildTelemetryPanel(app)
@@ -189,11 +188,12 @@ classdef RobotFleetApp < handle
             rows = {'Pos X', 'Pos Y', 'Pos Z', 'Vel', 'Omega', 'Roll', 'Pitch'};
             flds = {'posX', 'posY', 'posZ', 'vel', 'omega', 'roll', 'pitch'};
             for j = 1:7
-                uilabel(app.TelemetryGrid, 'Text', rows{j}+':', ...
+                uilabel(app.TelemetryGrid, 'Text', [rows{j}, ':'], ...
                     'FontSize', 10, 'FontWeight', 'bold');
-                app.TelemetryLabels.(flds{j}) = uilabel(app.TelemetryGrid, ...
+                lbl = uilabel(app.TelemetryGrid, ...
                     'Text', '─', 'FontSize', 10);
-                [app.TelemetryLabels.(flds{j}).Layout.Row, ~] = deal(j, 2);
+                lbl.Layout.Row = j; lbl.Layout.Column = 2;
+                app.TelemetryLabels.(flds{j}) = lbl;
             end
         end
 
@@ -204,11 +204,10 @@ classdef RobotFleetApp < handle
             app.FPSLabel = uilabel(app.MainGrid, 'Text', '', ...
                 'FontSize', 11, 'FontColor', [0.4 0.4 0.4]);
             app.FPSLabel.Layout.Row = 7; app.FPSLabel.Layout.Column = 3;
-            poolLbl = uilabel(app.MainGrid, 'Text', '', ...
-                'FontSize', 11, 'FontColor', [0.4 0.4 0.4]);
-            poolLbl.Layout.Row = 7; poolLbl.Layout.Column = 2;
-            app.StatusLabel.Parent.Children(end).Text = 'Pool: checking...';
-            app.StatusLabel.Parent.Children(end).HorizontalAlignment = 'center';
+            app.PoolLabel = uilabel(app.MainGrid, 'Text', 'Pool: checking...', ...
+                'FontSize', 11, 'FontColor', [0.4 0.4 0.4], ...
+                'HorizontalAlignment', 'center');
+            app.PoolLabel.Layout.Row = 7; app.PoolLabel.Layout.Column = 2;
         end
 
         function tryStartPool(app)
@@ -251,9 +250,12 @@ classdef RobotFleetApp < handle
                 case 'Humanoid';           r = robot.Humanoid(params);
             end
             r.Id = sprintf('%s_%d', type, app.RobotCounter);
+            ax = app.AxesHandle(n);
+            vg = robot.Visualizer(ax);
+            vg.addRobot(r);
+            app.Visualizer{n} = vg;
             app.Robots{n} = r;
             app.RobotVisible(n) = true;
-            ax = app.AxesHandle(n);
             ax.Visible = 'on';
             ax.Position = [25 25 1 1];
             ax.ButtonDownFcn = @(~,~) app.selectRobot(n);
@@ -268,9 +270,6 @@ classdef RobotFleetApp < handle
             gx = [-5 5 5 -5]; gy = [-5 -5 5 5]; gz = [0 0 0 0];
             patch(ax, gx, gy, gz, [0.85 0.85 0.85]);
 
-            vg = robot.Visualizer(ax);
-            vg.addRobot(r);
-            app.Visualizer{n} = vg;
             app.BBoxHandles{n} = [];
             app.BBoxVisible(n) = false;
             app.LegendCheckboxes(n).vis.Enable = 'on';
@@ -289,8 +288,10 @@ classdef RobotFleetApp < handle
                 return;
             end
             r = app.Robots{idx};
-            delete(r.GraphicsTransform.Children);
-            delete(r.GraphicsTransform);
+            if isprop(r, 'GraphicsTransform') && isvalid(r.GraphicsTransform)
+                delete(r.GraphicsTransform.Children);
+                delete(r.GraphicsTransform);
+            end
             app.Robots{idx} = [];
             app.Visualizer{idx} = [];
             app.BBoxHandles{idx} = [];
@@ -363,8 +364,11 @@ classdef RobotFleetApp < handle
                 app.SimTime = app.SimTime + app.PhysicsDt;
             end
             for i = active(:)'
-                if app.RobotVisible(i)
-                    app.Visualizer{i}.update(app.Robots{i});
+                if app.RobotVisible(i) && ~isempty(app.Visualizer{i})
+                    r = app.Robots{i};
+                    if isprop(r, 'GraphicsTransform') && isvalid(r.GraphicsTransform)
+                        app.Visualizer{i}.update(r);
+                    end
                     app.updateRobotGraphics(i);
                 end
                 if app.BBoxVisible(i) && app.RobotVisible(i)
@@ -379,8 +383,7 @@ classdef RobotFleetApp < handle
             app.FPSLabel.Text = sprintf('FPS: %.0f | Sim: %.1fs', fps, app.SimTime);
         end
 
-        function updateRobotGraphics(~, idx)
-            if nargin < 2; return; end
+        function updateRobotGraphics(~, ~)
         end
 
         function drawBoundingBox(app, idx)

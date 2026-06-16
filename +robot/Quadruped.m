@@ -281,8 +281,8 @@ classdef Quadruped < robot.GroundRobot
         function hg = plot(obj, ax)
             %PLOT  Build full quadruped visual: 3D body box, 2-link legs
             %      with joint spheres, red nose indicator.
-            hold(ax, 'on');
             hg = plot@robot.Robot(obj, ax);
+            hold(ancestor(ax, 'axes'), 'on');
             obj.buildGeometry(hg);
 
             obj.LegGraphics = cell(1, 4);

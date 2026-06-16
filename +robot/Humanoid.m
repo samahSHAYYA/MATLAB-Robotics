@@ -262,7 +262,7 @@ classdef Humanoid < robot.GroundRobot
 
         function hg = plot(obj, ax)
             hg = plot@robot.Robot(obj, ax);
-            hold(ax, 'on');
+            hold(ancestor(ax, 'axes'), 'on');
 
             [bv, bf, ~] = obj.buildGeometry();
             obj.TorsoPatch = patch('Parent', hg, 'Vertices', bv, 'Faces', bf, ...
