@@ -19,7 +19,7 @@ jobs:
         uses: matlab-actions/run-command@v2
         with:
           command: |
-            addpath('tests');
+            addpath('.agent/skills/lint/scripts');
             lintCode();
       - name: Run tests
         uses: matlab-actions/run-command@v2
