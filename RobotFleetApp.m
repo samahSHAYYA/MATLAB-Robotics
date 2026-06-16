@@ -13,11 +13,11 @@ classdef RobotFleetApp < handle
         SelectedIdx         (1,1) double = 0
         LegendCheckboxes    struct
         BBoxCheckboxes      struct
-        CtrlModeBtn         matlab.ui.control.ToggleButton
+        CtrlModeBtn
         TelemetryGrid       matlab.ui.container.GridLayout
         TelemetryLabels     struct
-        StatusLabel         matlab.ui.control.Label
-        FPSLabel            matlab.ui.control.Label
+        StatusLabel
+        FPSLabel
         SimTimer            timer
         PhysicsDt           (1,1) double = 0.005
         RenderDt            (1,1) double = 0.033
@@ -26,12 +26,12 @@ classdef RobotFleetApp < handle
         DesiredDirection    robot.Direction = robot.Direction.STOP
         DesiredAmount       (1,1) double = 0
         SyncMode            (1,1) logical = false
-        Pool                parallel.Pool
+        Pool
         PoolAvailable       (1,1) logical = false
         ScriptSchedule
         ScriptIdx           (1,1) double = 0
         ScriptMode          (1,1) logical = false
-        ScriptLabel         matlab.ui.control.Label
+        ScriptLabel
         ColorPalette        (1,4) cell = {[0.91 0.30 0.24], [0.20 0.60 0.86], [0.18 0.80 0.44], [0.61 0.35 0.71]}
         RobotCounter        (1,1) double = 0
     end
