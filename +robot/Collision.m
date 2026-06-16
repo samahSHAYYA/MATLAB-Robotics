@@ -78,6 +78,29 @@ classdef Collision
                 half = [0.1; 0.1; 0.1];
             end
         end
+        function [verts, edges] = buildOBB(rbt)
+            %BUILDOBB  Compute 8 vertices + 12 edges of robot's OBB in world frame.
+            %   [verts, edges] = robot.Collision.buildOBB(rbt)
+            %   verts - 8×3 world-frame corner positions
+            %   edges - 12×2 edge index pairs (1-based)
+            [center, half] = robot.Collision.robotOBB(rbt);
+            R = robot.Utils.quatToRotmx(rbt.State(4:7));
+            bVerts = [
+                 half(1),  half(2),  half(3)
+                 half(1),  half(2), -half(3)
+                 half(1), -half(2),  half(3)
+                 half(1), -half(2), -half(3)
+                -half(1),  half(2),  half(3)
+                -half(1),  half(2), -half(3)
+                -half(1), -half(2),  half(3)
+                -half(1), -half(2), -half(3)]';
+            verts = (R * bVerts + center(:))';
+            edges = [
+                1 2; 3 4; 5 6; 7 8
+                1 3; 2 4; 5 7; 6 8
+                1 5; 2 6; 3 7; 4 8];
+        end
+
         function pairs = checkAll(robots, useParallel)
             %CHECKALL  Check all robot pairs for collisions.
             %   pairs = robot.Collision.checkAll(robots) checks N robots

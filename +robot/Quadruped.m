@@ -28,6 +28,7 @@ classdef Quadruped < robot.GroundRobot
         GaitFrequency    (1,1) double = 2.0
         GaitTimer        (1,1) double = 0
         FrontIndicator
+        BodyGraphics     (1,1) cell
     end
 
     methods
@@ -158,34 +159,30 @@ classdef Quadruped < robot.GroundRobot
             obj.GaitEnabled = false;
         end
 
-        function [verts, faces, edges] = buildGeometry(obj)
-            %BUILDGEOMETRY  Wireframe for body box + shoulder/knee/foot vertices.
-            %   Vertex layout:
-            %     1-8:    body box
-            %     9-12:   shoulder positions
-            %     13-16:  knee positions (from solver)
-            %     17-20:  foot positions (from solver)
-            %   Edges: body wireframe edges + leg segments (shoulder→knee→foot).
+        function [verts, faces, edges] = buildGeometry(obj, parent)
+            %BUILDGEOMETRY  3D box body with colored faces + leg vertices.
+            %   [verts, faces, edges] = buildGeometry(obj) returns the body
+            %   box and leg geometry data (20 vertices, 6 face quads, 20
+            %   edges).
+            %   buildGeometry(obj, parent) additionally creates a coloured
+            %   body patch in the given parent (hgtransform or axes) and
+            %   stores the handle in obj.BodyGraphics.
             bx = obj.bodyLength / 2;
             by = obj.bodyWidth / 2;
             bz = obj.bodyHeight / 2;
 
-            bv = [-bx, -by, -bz;  bx, -by, -bz;  bx,  by, -bz; -bx,  by, -bz;
-                  -bx, -by,  bz;  bx, -by,  bz;  bx,  by,  bz; -bx,  by,  bz];
+            bv = [-bx, -by, -bz; bx, -by, -bz; bx,  by, -bz; -bx,  by, -bz;
+                  -bx, -by,  bz; bx, -by,  bz; bx,  by,  bz; -bx,  by,  bz];
 
-            bf = [1, 2, 3, 4;
-                  5, 8, 7, 6;
-                  1, 5, 6, 2;
-                  3, 7, 8, 4;
-                  1, 4, 8, 5;
-                  2, 6, 7, 3];
+            bf = [1, 2, 3, 4; 5, 8, 7, 6; 1, 5, 6, 2;
+                  3, 7, 8, 4; 1, 4, 8, 5; 2, 6, 7, 3];
 
             be = [1, 2; 2, 3; 3, 4; 4, 1;
                   5, 6; 6, 7; 7, 8; 8, 5;
                   1, 5; 2, 6; 3, 7; 4, 8];
 
             sw = obj.shoulderWidth;
-            sv = [ bx,  sw, 0;  bx, -sw, 0; -bx,  sw, 0; -bx, -sw, 0];
+            sv = [bx,  sw, 0; bx, -sw, 0; -bx,  sw, 0; -bx, -sw, 0];
 
             kv = obj.KneePositions;
             fv = obj.FootPositions;
@@ -204,6 +201,17 @@ classdef Quadruped < robot.GroundRobot
             end
 
             edges = [be; le];
+
+            if nargin >= 2
+                bodyColor = [0.18 0.80 0.44];
+                edgeColor = [0.12 0.60 0.30];
+                h = patch('Parent', parent, ...
+                    'Vertices', bv, 'Faces', bf, ...
+                    'FaceColor', bodyColor, ...
+                    'EdgeColor', edgeColor, ...
+                    'LineWidth', 1.5);
+                obj.BodyGraphics = {h};
+            end
         end
 
         function dstate = computeDynamics(obj, ~, state, control)
@@ -271,58 +279,60 @@ classdef Quadruped < robot.GroundRobot
         end
 
         function hg = plot(obj, ax)
-            %PLOT  Build full quadruped visual: body, legs, shoulder/knee
-            %       cylinders, red nose indicator.
+            %PLOT  Build full quadruped visual: 3D body box, 2-link legs
+            %      with joint spheres, red nose indicator.
+            hold(ax, 'on');
             hg = plot@robot.Robot(obj, ax);
-            [verts, faces, ~] = obj.buildGeometry();
-
-            patch('Parent', hg, 'Vertices', verts, 'Faces', faces, ...
-                  'FaceColor', [0.7 0.8 0.7], 'EdgeColor', 'none');
+            obj.buildGeometry(hg);
 
             obj.LegGraphics = cell(1, 4);
-            nBody = 8;
-            nShoulder = 4;
-            sw = obj.shoulderWidth;
-            bx = obj.bodyLength/2;
-            shoulderPos = [bx, sw, 0; bx, -sw, 0; -bx, sw, 0; -bx, -sw, 0];
+            [sx, sy, sz] = sphere(12);
+
             for i = 1:4
-                shoulderIdx = nBody + i;
-                kneeIdx = nBody + nShoulder + i;
-                footIdx = nBody + nShoulder + 4 + i;
+                shoulder = obj.getShoulderPos(i);
+                knee = obj.KneePositions(i, :);
+                foot = obj.FootPositions(i, :);
 
-                obj.LegGraphics{i}(1) = line('Parent', hg, ...
-                    'XData', verts([shoulderIdx, kneeIdx], 1), ...
-                    'YData', verts([shoulderIdx, kneeIdx], 2), ...
-                    'ZData', verts([shoulderIdx, kneeIdx], 3), ...
-                    'Color', 'k', 'LineWidth', 3);
+                knee_local = knee - shoulder;
+                foot_local = foot - shoulder;
 
-                obj.LegGraphics{i}(2) = line('Parent', hg, ...
-                    'XData', verts([kneeIdx, footIdx], 1), ...
-                    'YData', verts([kneeIdx, footIdx], 2), ...
-                    'ZData', verts([kneeIdx, footIdx], 3), ...
-                    'Color', 'k', 'LineWidth', 3);
+                leg_hg = hgtransform('Parent', hg, ...
+                    'Matrix', makehgtform('translate', shoulder));
 
-                obj.LegGraphics{i}(3) = line('Parent', hg, ...
-                    'XData', verts(footIdx, 1), ...
-                    'YData', verts(footIdx, 2), ...
-                    'ZData', verts(footIdx, 3), ...
-                    'Marker', '.', 'MarkerSize', 14, ...
-                    'Color', [0.8 0.3 0.3]);
+                thigh = line('Parent', leg_hg, ...
+                    'XData', [0, knee_local(1)], ...
+                    'YData', [0, knee_local(2)], ...
+                    'ZData', [0, knee_local(3)], ...
+                    'Color', [0.15 0.65 0.35], 'LineWidth', 3);
 
-                [cx, cy, cz] = cylinder(0.018, 8);
-                cz = cz * 0.04 - 0.02;
-                sPos = shoulderPos(i, :);
-                obj.LegGraphics{i}(4) = surf(cx + sPos(1), cy + sPos(2), cz + sPos(3), ...
-                    'Parent', hg, ...
-                    'FaceColor', [0.2 0.2 0.2], 'EdgeColor', 'none');
+                shin = line('Parent', leg_hg, ...
+                    'XData', [knee_local(1), foot_local(1)], ...
+                    'YData', [knee_local(2), foot_local(2)], ...
+                    'ZData', [knee_local(3), foot_local(3)], ...
+                    'Color', [0.12 0.55 0.30], 'LineWidth', 3);
 
-                kPos = obj.KneePositions(i, :);
-                obj.LegGraphics{i}(5) = surf(cx + kPos(1), cy + kPos(2), cz + kPos(3), ...
-                    'Parent', hg, ...
-                    'FaceColor', [0.4 0.4 0.4], 'EdgeColor', 'none');
+                shoulder_sph = surf(sx*0.025, sy*0.025, sz*0.025, ...
+                    'Parent', leg_hg, ...
+                    'FaceColor', [0.15 0.65 0.35], 'EdgeColor', 'none');
+
+                knee_sph = surf(sx*0.02 + knee_local(1), ...
+                                sy*0.02 + knee_local(2), ...
+                                sz*0.02 + knee_local(3), ...
+                    'Parent', leg_hg, ...
+                    'FaceColor', [0.12 0.55 0.30], 'EdgeColor', 'none');
+
+                foot_sph = surf(sx*0.015 + foot_local(1), ...
+                                sy*0.015 + foot_local(2), ...
+                                sz*0.015 + foot_local(3), ...
+                    'Parent', leg_hg, ...
+                    'FaceColor', [0.12 0.55 0.30], 'EdgeColor', 'none');
+
+                obj.LegGraphics{i} = [leg_hg, thigh, shin, ...
+                                      shoulder_sph, knee_sph, foot_sph];
             end
 
-            bz = obj.bodyHeight / 2;
+            bx = obj.bodyLength/2;
+            bz = obj.bodyHeight/2;
             nose = [bx+0.05, 0, 0; bx+0.02, -bz, -bz; bx+0.02, bz, -bz; bx+0.02, 0, bz];
             obj.FrontIndicator = patch('Parent', hg, ...
                 'Vertices', nose, 'Faces', [1,2,3; 1,3,4; 1,4,2; 2,4,3], ...
@@ -439,43 +449,43 @@ classdef Quadruped < robot.GroundRobot
         end
 
         function updateWireframe(obj)
-            %UPDATEWIREFRAME  Refresh 3D leg lines and knee cylinder
-            %                 positions after IK solve.
+            %UPDATEWIREFRAME  Refresh leg lines and joint-sphere positions
+            %                 after IK solve.  The body moves with the
+            %                 parent hgtransform and does not need per-step
+            %                 vertex updates.
             if isempty(obj.LegGraphics{1})
                 return;
             end
 
-            nBody = 8;
-            nShoulder = 4;
-            [verts, ~, ~] = obj.buildGeometry();
+            [sx, sy, sz] = sphere(12);
 
             for i = 1:4
-                shoulderIdx = nBody + i;
-                kneeIdx = nBody + nShoulder + i;
-                footIdx = nBody + nShoulder + 4 + i;
+                shoulder = obj.getShoulderPos(i);
+                knee = obj.KneePositions(i, :);
+                foot = obj.FootPositions(i, :);
 
-                set(obj.LegGraphics{i}(1), ...
-                    'XData', verts([shoulderIdx, kneeIdx], 1), ...
-                    'YData', verts([shoulderIdx, kneeIdx], 2), ...
-                    'ZData', verts([shoulderIdx, kneeIdx], 3));
+                knee_local = knee - shoulder;
+                foot_local = foot - shoulder;
 
                 set(obj.LegGraphics{i}(2), ...
-                    'XData', verts([kneeIdx, footIdx], 1), ...
-                    'YData', verts([kneeIdx, footIdx], 2), ...
-                    'ZData', verts([kneeIdx, footIdx], 3));
+                    'XData', [0, knee_local(1)], ...
+                    'YData', [0, knee_local(2)], ...
+                    'ZData', [0, knee_local(3)]);
 
                 set(obj.LegGraphics{i}(3), ...
-                    'XData', verts(footIdx, 1), ...
-                    'YData', verts(footIdx, 2), ...
-                    'ZData', verts(footIdx, 3));
+                    'XData', [knee_local(1), foot_local(1)], ...
+                    'YData', [knee_local(2), foot_local(2)], ...
+                    'ZData', [knee_local(3), foot_local(3)]);
 
-                [cx, cy, cz] = cylinder(0.018, 8);
-                cz = cz * 0.04 - 0.02;
-                kPos = obj.KneePositions(i, :);
                 set(obj.LegGraphics{i}(5), ...
-                    'XData', cx + kPos(1), ...
-                    'YData', cy + kPos(2), ...
-                    'ZData', cz + kPos(3));
+                    'XData', sx*0.02 + knee_local(1), ...
+                    'YData', sy*0.02 + knee_local(2), ...
+                    'ZData', sz*0.02 + knee_local(3));
+
+                set(obj.LegGraphics{i}(6), ...
+                    'XData', sx*0.015 + foot_local(1), ...
+                    'YData', sy*0.015 + foot_local(2), ...
+                    'ZData', sz*0.015 + foot_local(3));
             end
         end
     end

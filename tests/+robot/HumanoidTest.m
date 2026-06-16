@@ -81,9 +81,9 @@ classdef HumanoidTest < matlab.unittest.TestCase
             r = robot.Humanoid(testCase.params);
             [v, f, e] = r.buildGeometry();
             testCase.verifyEqual(size(v, 2), 3);
-            testCase.verifyTrue(size(v, 1) > 8);
-            testCase.verifyTrue(size(f, 1) >= 6);
-            testCase.verifyTrue(size(e, 1) >= 12);
+            testCase.verifyEqual(size(v, 1), 8);
+            testCase.verifyEqual(size(f, 1), 6);
+            testCase.verifyEqual(size(e, 1), 12);
         end
 
         function resetRestoresStateAndDisablesGait(testCase)

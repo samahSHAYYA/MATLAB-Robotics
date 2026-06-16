@@ -16,6 +16,13 @@ classdef Humanoid < robot.GroundRobot
         FootPositions    (2,3) double
         KneePositions    (2,3) double
         FootBoxVerts     (2,8,3) double
+        ArmGraphics      (1,2) cell
+        ArmLines
+        ArmJoints
+        LegLines
+        LegJoints
+        TorsoPatch
+        HeadSurf
         JointAngles      (2,3) double
         LegGraphics      (1,2) cell
         GaitPhase        (2,1) double = [0; 0.5]
@@ -75,6 +82,7 @@ classdef Humanoid < robot.GroundRobot
             obj.KneePositions = hipPos + [0, 0, -L1];
             obj.JointAngles = zeros(2, 3);
             obj.LegGraphics = cell(1, 2);
+            obj.ArmGraphics = cell(1, 2);
             obj.initFootBoxVerts();
         end
 
@@ -150,68 +158,16 @@ classdef Humanoid < robot.GroundRobot
         end
 
         function [verts, faces, edges] = buildGeometry(obj)
-            depth = obj.bodyWidth / 2;
-            width = obj.bodyWidth / 4;
-            height = obj.bodyHeight / 2;
+            bw2 = obj.bodyWidth / 2;
+            hw4 = obj.hipWidth / 4;
+            bh = obj.bodyHeight;
+            cz = bh * 0.4;
+            hz = bh / 2;
 
-            bv = [-depth, -width, -height;  depth, -width, -height;  depth,  width, -height; -depth,  width, -height;
-                  -depth, -width,  height;  depth, -width,  height;  depth,  width,  height; -depth,  width,  height];
-
-            bf = [1, 2, 3, 4;
-                  5, 8, 7, 6;
-                  1, 5, 6, 2;
-                  3, 7, 8, 4;
-                  1, 4, 8, 5;
-                  2, 6, 7, 3];
-
-            be = [1, 2; 2, 3; 3, 4; 4, 1;
-                  5, 6; 6, 7; 7, 8; 8, 5;
-                  1, 5; 2, 6; 3, 7; 4, 8];
-
-            hw = obj.hipWidth;
-            hv = [-hw, 0, 0; hw, 0, 0];
-
-            kv = obj.KneePositions;
-            fv = obj.FootPositions;
-
-            nBody = size(bv, 1);
-            nHip = size(hv, 1);
-            nKnee = size(kv, 1);
-            nAnkle = nKnee;
-
-            obj.initFootBoxVerts();
-            fvBox = [squeeze(obj.FootBoxVerts(1, :, :)); squeeze(obj.FootBoxVerts(2, :, :))];
-            boxFaces = zeros(12, 4);
-            for i = 1:2
-                base = nBody + nHip + nKnee + nAnkle + (i-1)*8;
-                bf2 = [base+1, base+2, base+3, base+4;
-                       base+5, base+8, base+7, base+6;
-                       base+1, base+5, base+6, base+2;
-                       base+3, base+7, base+8, base+4;
-                       base+1, base+4, base+8, base+5;
-                       base+2, base+6, base+7, base+3];
-                boxFaces((i-1)*6+1:i*6, :) = bf2;
-            end
-
-            verts = [bv; hv; kv; fv; fvBox];
-            faces = [bf; boxFaces];
-
-            le = zeros(4, 2);
-            for i = 1:2
-                le(2*i-1, :) = [nBody + i, nBody + nHip + i];
-                le(2*i, :)   = [nBody + nHip + i, nBody + nHip + nAnkle + i];
-            end
-
-            nBeforeFeet = nBody + nHip + nKnee + nAnkle;
-            fe = zeros(24, 2);
-            for i = 1:2
-                base = nBeforeFeet + (i-1)*8;
-                fe(12*i-11:12*i, :) = [base+1, base+2; base+2, base+3; base+3, base+4; base+4, base+1;
-                                       base+5, base+6; base+6, base+7; base+7, base+8; base+8, base+5;
-                                       base+1, base+5; base+2, base+6; base+3, base+7; base+4, base+8];
-            end
-
-            edges = [be; le; fe];
+            verts = [-bw2, -hw4, cz-hz;  bw2, -hw4, cz-hz;  bw2,  hw4, cz-hz; -bw2,  hw4, cz-hz;
+                     -bw2, -hw4, cz+hz;  bw2, -hw4, cz+hz;  bw2,  hw4, cz+hz; -bw2,  hw4, cz+hz];
+            faces = [1,2,3,4; 5,8,7,6; 1,5,6,2; 3,7,8,4; 1,4,8,5; 2,6,7,3];
+            edges = [1,2; 2,3; 3,4; 4,1; 5,6; 6,7; 7,8; 8,5; 1,5; 2,6; 3,7; 4,8];
         end
 
         function dstate = computeDynamics(obj, ~, state, control)
@@ -306,47 +262,72 @@ classdef Humanoid < robot.GroundRobot
 
         function hg = plot(obj, ax)
             hg = plot@robot.Robot(obj, ax);
-            [verts, faces, ~] = obj.buildGeometry();
+            hold(ax, 'on');
 
-            patch('Parent', hg, 'Vertices', verts, 'Faces', faces, ...
-                  'FaceColor', [0.7 0.8 0.7], 'EdgeColor', 'none');
+            [bv, bf, ~] = obj.buildGeometry();
+            obj.TorsoPatch = patch('Parent', hg, 'Vertices', bv, 'Faces', bf, ...
+                'FaceColor', [0.61 0.35 0.71], ...
+                'EdgeColor', [0.41 0.20 0.51], 'LineWidth', 1.5);
 
-            obj.LegGraphics = cell(1, 2);
-            nBody = 8;
-            nHip = 2;
-            nKnee = 2;
-            hw = obj.hipWidth;
-            hipPos = [-hw, 0, 0; hw, 0, 0];
+            [X, Y, Z] = sphere(12);
+            headR = obj.bodyWidth * 0.2;
+            hz2 = obj.bodyHeight * 0.85;
+            obj.HeadSurf = surf(X*headR, Y*headR, Z*headR + hz2, ...
+                'Parent', hg, 'FaceColor', [0.85 0.75 0.90], 'EdgeColor', 'none');
 
-            nAnkle = nBody + nHip + nKnee;
+            obj.ArmGraphics = cell(1, 2);
+            obj.ArmLines = gobjects(2, 2);
+            obj.ArmJoints = gobjects(2, 3);
+            bh = obj.bodyHeight;
             for i = 1:2
-                hipIdx = nBody + i;
-                kneeIdx = nBody + nHip + i;
-                footIdx = nAnkle + i;
+                armTf = hgtransform(hg);
+                obj.ArmGraphics{i} = armTf;
+                side = 2*(i-1) - 1;
+                sx = side * obj.bodyWidth * 0.55;
+                sh = [sx, 0, bh*0.65];
+                el = [sx, 0, bh*0.40];
+                ha = [sx, 0, bh*0.15];
+                obj.ArmLines(i,1) = line('Parent', armTf, ...
+                    'XData', [sh(1), el(1)], 'YData', [sh(2), el(2)], 'ZData', [sh(3), el(3)], ...
+                    'Color', [0.75 0.50 0.80], 'LineWidth', 3);
+                obj.ArmLines(i,2) = line('Parent', armTf, ...
+                    'XData', [el(1), ha(1)], 'YData', [el(2), ha(2)], 'ZData', [el(3), ha(3)], ...
+                    'Color', [0.65 0.40 0.70], 'LineWidth', 2.5);
+                [cx, cy, cz] = sphere(8);
+                joints = [sh; el; ha];
+                for j = 1:3
+                    obj.ArmJoints(i,j) = surf(cx*0.02 + joints(j,1), cy*0.02 + joints(j,2), ...
+                        cz*0.02 + joints(j,3), 'Parent', armTf, ...
+                        'FaceColor', [0.75 0.50 0.80], 'EdgeColor', 'none');
+                end
+            end
 
-                obj.LegGraphics{i}(1) = line('Parent', hg, ...
-                    'XData', verts([hipIdx, kneeIdx], 1), ...
-                    'YData', verts([hipIdx, kneeIdx], 2), ...
-                    'ZData', verts([hipIdx, kneeIdx], 3), ...
-                    'Color', 'k', 'LineWidth', 3);
-
-                obj.LegGraphics{i}(2) = line('Parent', hg, ...
-                    'XData', verts([kneeIdx, footIdx], 1), ...
-                    'YData', verts([kneeIdx, footIdx], 2), ...
-                    'ZData', verts([kneeIdx, footIdx], 3), ...
-                    'Color', 'k', 'LineWidth', 3);
-
-                [cx, cy, cz] = cylinder(0.025, 8);
-                cz = cz * 0.05 - 0.025;
-                hPos = hipPos(i, :);
-                obj.LegGraphics{i}(3) = surf(cx + hPos(1), cy + hPos(2), cz + hPos(3), ...
-                    'Parent', hg, ...
-                    'FaceColor', [0.2 0.2 0.2], 'EdgeColor', 'none');
-
-                kPos = obj.KneePositions(i, :);
-                obj.LegGraphics{i}(4) = surf(cx + kPos(1), cz + kPos(2), cy + kPos(3), ...
-                    'Parent', hg, ...
-                    'FaceColor', [0.4 0.4 0.4], 'EdgeColor', 'none');
+            hw = obj.hipWidth;
+            L1 = obj.thighLength;
+            L2 = obj.shinLength;
+            obj.LegGraphics = cell(1, 2);
+            obj.LegLines = gobjects(2, 2);
+            obj.LegJoints = gobjects(2, 3);
+            for i = 1:2
+                legTf = hgtransform(hg);
+                obj.LegGraphics{i} = legTf;
+                side = 2*(i-1) - 1;
+                hp = [side*hw, 0, 0];
+                kp = [side*hw, 0, -L1];
+                fp = [side*hw, 0, -(L1+L2)];
+                obj.LegLines(i,1) = line('Parent', legTf, ...
+                    'XData', [hp(1), kp(1)], 'YData', [hp(2), kp(2)], 'ZData', [hp(3), kp(3)], ...
+                    'Color', [0.30 0.70 0.40], 'LineWidth', 3);
+                obj.LegLines(i,2) = line('Parent', legTf, ...
+                    'XData', [kp(1), fp(1)], 'YData', [kp(2), fp(2)], 'ZData', [kp(3), fp(3)], ...
+                    'Color', [0.25 0.60 0.35], 'LineWidth', 3);
+                [cx, cy, cz] = sphere(8);
+                joints = [hp; kp; fp];
+                for j = 1:3
+                    obj.LegJoints(i,j) = surf(cx*0.025 + joints(j,1), cy*0.025 + joints(j,2), ...
+                        cz*0.025 + joints(j,3), 'Parent', legTf, ...
+                        'FaceColor', [0.25 0.60 0.35], 'EdgeColor', 'none');
+                end
             end
 
             fd = obj.bodyWidth / 2;
@@ -354,11 +335,8 @@ classdef Humanoid < robot.GroundRobot
             obj.FrontIndicator = patch('Parent', hg, ...
                 'Vertices', nose, 'Faces', [1,2,3; 1,3,4; 1,4,2; 2,4,3], ...
                 'FaceColor', [0.9 0.1 0.1], 'EdgeColor', 'k');
-
             line('Parent', hg, ...
-                'XData', [0, 0], ...
-                'YData', [fd+0.03, fd+0.06], ...
-                'ZData', [0, 0], ...
+                'XData', [0, 0], 'YData', [fd+0.03, fd+0.06], 'ZData', [0, 0], ...
                 'Color', [0.9 0.1 0.1], 'LineWidth', 2);
         end
     end
@@ -471,38 +449,42 @@ classdef Humanoid < robot.GroundRobot
         end
 
         function updateWireframe(obj)
-            if isempty(obj.LegGraphics{1})
+            if isempty(obj.LegGraphics) || isempty(obj.LegGraphics{1}) || ~isvalid(obj.LegGraphics{1})
                 return;
             end
 
-            nBody = 8;
-            nHip = 2;
-            nKnee = 2;
-            nAnkle = nKnee;
-            [verts, ~, ~] = obj.buildGeometry();
+            hw = obj.hipWidth;
+            hipPos = [-hw, 0, 0; hw, 0, 0];
 
             for i = 1:2
-                hipIdx = nBody + i;
-                kneeIdx = nBody + nHip + i;
-                footIdx = nBody + nHip + nAnkle + i;
+                hip = hipPos(i, :);
+                knee = obj.KneePositions(i, :);
+                foot = obj.FootPositions(i, :);
 
-                set(obj.LegGraphics{i}(1), ...
-                    'XData', verts([hipIdx, kneeIdx], 1), ...
-                    'YData', verts([hipIdx, kneeIdx], 2), ...
-                    'ZData', verts([hipIdx, kneeIdx], 3));
+                set(obj.LegLines(i, 1), ...
+                    'XData', [hip(1), knee(1)], ...
+                    'YData', [hip(2), knee(2)], ...
+                    'ZData', [hip(3), knee(3)]);
 
-                set(obj.LegGraphics{i}(2), ...
-                    'XData', verts([kneeIdx, footIdx], 1), ...
-                    'YData', verts([kneeIdx, footIdx], 2), ...
-                    'ZData', verts([kneeIdx, footIdx], 3));
+                set(obj.LegLines(i, 2), ...
+                    'XData', [knee(1), foot(1)], ...
+                    'YData', [knee(2), foot(2)], ...
+                    'ZData', [knee(3), foot(3)]);
 
-                [cx, cy, cz] = cylinder(0.025, 8);
-                cz = cz * 0.05 - 0.025;
-                kPos = obj.KneePositions(i, :);
-                set(obj.LegGraphics{i}(4), ...
-                    'XData', cx + kPos(1), ...
-                    'YData', cz + kPos(2), ...
-                    'ZData', cy + kPos(3));
+                [cx, cy, cz] = sphere(8);
+                r = 0.025;
+                set(obj.LegJoints(i, 1), ...
+                    'XData', cx*r + hip(1), ...
+                    'YData', cy*r + hip(2), ...
+                    'ZData', cz*r + hip(3));
+                set(obj.LegJoints(i, 2), ...
+                    'XData', cx*r + knee(1), ...
+                    'YData', cy*r + knee(2), ...
+                    'ZData', cz*r + knee(3));
+                set(obj.LegJoints(i, 3), ...
+                    'XData', cx*r + foot(1), ...
+                    'YData', cy*r + foot(2), ...
+                    'ZData', cz*r + foot(3));
             end
         end
     end

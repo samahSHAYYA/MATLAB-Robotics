@@ -10,6 +10,7 @@ classdef DifferentialDrive < robot.GroundRobot
         mass        (1,1) double
         inertia     (1,1) double
         maxTorque   (1,1) double
+        BodyGraphics (1,:) cell
     end
 
     methods
@@ -58,54 +59,54 @@ classdef DifferentialDrive < robot.GroundRobot
             end
         end
 
-        function [verts, faces, edges] = buildGeometry(obj)
-            %BUILDGEOMETRY  Wireframe for chassis box + left/right wheel blocks.
-            bx = 0.2; by = 0.15; bz = 0.05;
-            bv = [-bx, -by, -bz;  bx, -by, -bz;  bx,  by, -bz; -bx,  by, -bz;
-                  -bx, -by,  bz;  bx, -by,  bz;  bx,  by,  bz; -bx,  by,  bz];
+        function [verts, faces, edges] = buildGeometry(obj, hg)
+            r = obj.wheelRadius;
+            tw = obj.trackWidth;
 
-            bf = [1, 2, 3, 4;
-                  5, 8, 7, 6;
-                  1, 5, 6, 2;
-                  3, 7, 8, 4;
-                  1, 4, 8, 5;
-                  2, 6, 7, 3];
+            bx = 0.15; by = 0.10; bz = 0.04;
+            cz = 0.04;
+            bv = [-bx, -by, -bz+cz;  bx, -by, -bz+cz;  bx,  by, -bz+cz; -bx,  by, -bz+cz;
+                  -bx, -by,  bz+cz;  bx, -by,  bz+cz;  bx,  by,  bz+cz; -bx,  by,  bz+cz];
+            bf = [1, 2, 3, 4; 5, 8, 7, 6; 1, 5, 6, 2; 3, 7, 8, 4; 1, 4, 8, 5; 2, 6, 7, 3];
+            be = [1,2; 2,3; 3,4; 4,1; 5,6; 6,7; 7,8; 8,5; 1,5; 2,6; 3,7; 4,8];
+            verts = bv; faces = bf; edges = be;
 
-            be = [1, 2; 2, 3; 3, 4; 4, 1;
-                  5, 6; 6, 7; 7, 8; 8, 5;
-                  1, 5; 2, 6; 3, 7; 4, 8];
+            if nargin >= 2
+                bodyColor = [0.91 0.30 0.24];
+                wheelColor = [0.80 0.25 0.20];
+                handles = cell(1, 8);
+                nxt = 1;
 
-            wx = 0.025; wy = 0.1; wz = 0.1;
+                handles{nxt} = patch('Parent', hg, 'Vertices', bv, 'Faces', bf, ...
+                    'FaceColor', bodyColor, 'EdgeColor', 'k', 'LineWidth', 1.5);
+                nxt = nxt + 1;
 
-            lcx = 0; lcy = -obj.trackWidth/2; lcz = 0;
-            lv = [lcx-wx, lcy-wy, lcz-wz;  lcx+wx, lcy-wy, lcz-wz;
-                  lcx+wx, lcy+wy, lcz-wz;  lcx-wx, lcy+wy, lcz-wz;
-                  lcx-wx, lcy-wy, lcz+wz;  lcx+wx, lcy-wy, lcz+wz;
-                  lcx+wx, lcy+wy, lcz+wz;  lcx-wx, lcy+wy, lcz+wz];
+                nPts = 24;
+                th = (0:nPts-1) * 2*pi / nPts;
+                for side = [-1, 1]
+                    wy = side * tw/2;
+                    wz = r;
+                    handles{nxt} = patch('Parent', hg, ...
+                        'XData', r*cos(th), 'YData', wy + zeros(1,nPts), ...
+                        'ZData', r*sin(th) + wz, ...
+                        'FaceColor', 'none', 'EdgeColor', wheelColor, 'LineWidth', 2);
+                    nxt = nxt + 1;
+                    handles{nxt} = line('Parent', hg, ...
+                        'XData', [-r, r], 'YData', [wy, wy], 'ZData', [wz, wz], ...
+                        'Color', wheelColor, 'LineWidth', 1);
+                    nxt = nxt + 1;
+                    handles{nxt} = line('Parent', hg, ...
+                        'XData', [0, 0], 'YData', [wy, wy], 'ZData', [wz-r, wz+r], ...
+                        'Color', wheelColor, 'LineWidth', 1);
+                    nxt = nxt + 1;
+                end
 
-            rcx = 0; rcy = obj.trackWidth/2; rcz = 0;
-            rv = [rcx-wx, rcy-wy, rcz-wz;  rcx+wx, rcy-wy, rcz-wz;
-                  rcx+wx, rcy+wy, rcz-wz;  rcx-wx, rcy+wy, rcz-wz;
-                  rcx-wx, rcy-wy, rcz+wz;  rcx+wx, rcy-wy, rcz+wz;
-                  rcx+wx, rcy+wy, rcz+wz;  rcx-wx, rcy+wy, rcz+wz];
+                handles{nxt} = line('Parent', hg, ...
+                    'XData', [0, 0], 'YData', [-tw/2, tw/2], 'ZData', [r, r], ...
+                    'Color', [0.6 0.6 0.6], 'LineWidth', 1.5);
 
-            wf = [1, 2, 3, 4;
-                  5, 8, 7, 6;
-                  1, 5, 6, 2;
-                  3, 7, 8, 4;
-                  1, 4, 8, 5;
-                  2, 6, 7, 3];
-
-            we = [1, 2; 2, 3; 3, 4; 4, 1;
-                  5, 6; 6, 7; 7, 8; 8, 5;
-                  1, 5; 2, 6; 3, 7; 4, 8];
-
-            nBody = size(bv, 1);
-            nLeft = size(lv, 1);
-
-            verts = [bv; lv; rv];
-            faces = [bf; wf + nBody; wf + nBody + nLeft];
-            edges = [be; we + nBody; we + nBody + nLeft];
+                obj.BodyGraphics = handles;
+            end
         end
 
         function dstate = computeDynamics(obj, ~, state, control)
@@ -139,18 +140,8 @@ classdef DifferentialDrive < robot.GroundRobot
         end
 
         function hg = plot(obj, ax)
-            %PLOT  Build wireframe: grey chassis + wheel blocks, edge lines.
             hg = plot@robot.Robot(obj, ax);
-            [verts, faces, edges] = obj.buildGeometry();
-            patch('Parent', hg, 'Vertices', verts, 'Faces', faces, ...
-                  'FaceColor', [0.7 0.7 0.7], 'EdgeColor', 'none');
-            for i = 1:size(edges, 1)
-                line('Parent', hg, ...
-                     'XData', verts(edges(i,:), 1), ...
-                     'YData', verts(edges(i,:), 2), ...
-                     'ZData', verts(edges(i,:), 3), ...
-                     'Color', 'k', 'LineWidth', 1.5);
-            end
+            obj.buildGeometry(hg);
         end
     end
 end

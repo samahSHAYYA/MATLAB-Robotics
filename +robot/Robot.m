@@ -7,6 +7,7 @@ classdef Robot < handle
     %     State(8:10)  — velocity in body frame [vx; vy; vz]
     %     State(11:13) — angular velocity in body frame [wx; wy; wz]
     properties
+        Id                  (1,1) string = ""
         Pose                (1,1) struct
         State               (13,1) double
         Control             (:,1) double

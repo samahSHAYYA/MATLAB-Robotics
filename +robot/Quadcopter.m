@@ -14,6 +14,7 @@ classdef Quadcopter < robot.AerialRobot
         kTorque      (1,1) double = 0.05
         RotorGraphics (1,4) cell
         FrontIndicator
+        BodyGraphics (1,:) cell
     end
 
     properties (Access = private)
@@ -148,12 +149,7 @@ classdef Quadcopter < robot.AerialRobot
             T = max(0, min(obj.maxThrust, T));
         end
 
-        function [verts, faces, edges] = buildGeometry(obj)
-            %BUILDGEOMETRY  Wireframe vertices/faces/edges for quadcopter.
-            %   Body: rectangular box at origin.
-            %   Arms: lines from center to 4 motor positions.
-            %   Rotors: disks at each motor position.
-            %   Returns arrays suitable for patch() and line().
+        function [verts, faces, edges] = buildGeometry(obj, hg)
             L = obj.armLength;
             bx = obj.bodySize(1)/2;
             by = obj.bodySize(2)/2;
@@ -161,63 +157,53 @@ classdef Quadcopter < robot.AerialRobot
 
             bv = [-bx, -by, -bz;  bx, -by, -bz;  bx,  by, -bz; -bx,  by, -bz;
                   -bx, -by,  bz;  bx, -by,  bz;  bx,  by,  bz; -bx,  by,  bz];
-            bf = [1, 2, 3, 4;
-                  5, 8, 7, 6;
-                  1, 5, 6, 2;
-                  3, 7, 8, 4;
-                  1, 4, 8, 5;
-                  2, 6, 7, 3];
-            be = [1, 2; 2, 3; 3, 4; 4, 1;
-                  5, 6; 6, 7; 7, 8; 8, 5;
-                  1, 5; 2, 6; 3, 7; 4, 8];
-
-            r = [ L, -L, 0;  L,  L, 0; -L, -L, 0; -L,  L, 0];
-
-            av = [0, 0, 0; r];
-
-            nBody = size(bv, 1);
-            ae = zeros(4, 2);
+            bf = [1, 2, 3, 4; 5, 8, 7, 6; 1, 5, 6, 2; 3, 7, 8, 4; 1, 4, 8, 5; 2, 6, 7, 3];
+            be = [1,2; 2,3; 3,4; 4,1; 5,6; 6,7; 7,8; 8,5; 1,5; 2,6; 3,7; 4,8];
+            armTips = [L, -L, 0; L, L, 0; -L, -L, 0; -L, L, 0];
+            nB = size(bv, 1);
+            le = zeros(4, 2);
             for i = 1:4
-                ae(i, :) = [nBody + 1, nBody + 1 + i];
+                le(i, :) = [1, nB + i];
             end
+            verts = [bv; armTips]; faces = bf; edges = [be; le];
 
-            nDisk = 8;
-            rr = 0.03;
-            th = linspace(0, 2*pi, nDisk+1)';
-            th(end) = [];
-            circ = [cos(th), sin(th), zeros(nDisk, 1)] * rr;
+            if nargin >= 2
+                bodyColor = [0.20 0.60 0.86];
+                bodyEdge = [0.15 0.45 0.65];
+                armColor = [0.30 0.70 0.90];
+                propColor = [0.20 0.60 0.86];
 
-            dv = zeros(nDisk * 4, 3);
-            for i = 1:4
-                dv((i-1)*nDisk + 1 : i*nDisk, :) = circ + r(i, :);
-            end
+                handles = cell(1, 9);
+                nxt = 1;
 
-            nArm = size(av, 1);
-            verts = [bv; av; dv];
+                handles{nxt} = patch('Parent', hg, 'Vertices', bv, 'Faces', bf, ...
+                    'FaceColor', bodyColor, 'EdgeColor', bodyEdge, 'LineWidth', 1.5);
+                nxt = nxt + 1;
 
-            df = NaN(4 * nDisk, 4);
-            for i = 1:4
-                tipIdx = nBody + 1 + i;
-                for j = 1:nDisk
-                    j1 = nBody + nArm + (i-1)*nDisk + j;
-                    j2 = nBody + nArm + (i-1)*nDisk + mod(j, nDisk) + 1;
-                    df((i-1)*nDisk + j, :) = [tipIdx, j1, j2, NaN];
+                armPos = [L, -L, 0; L, L, 0; -L, -L, 0; -L, L, 0];
+                for i = 1:4
+                    handles{nxt} = line('Parent', hg, ...
+                        'XData', [0, armPos(i,1)], 'YData', [0, armPos(i,2)], ...
+                        'ZData', [0, armPos(i,3)], 'Color', armColor, 'LineWidth', 2);
+                    nxt = nxt + 1;
                 end
-            end
 
-            de = zeros(4 * nDisk * 2, 2);
-            for i = 1:4
-                tipIdx = nBody + 1 + i;
-                for j = 1:nDisk
-                    j1 = nBody + nArm + (i-1)*nDisk + j;
-                    j2 = nBody + nArm + (i-1)*nDisk + mod(j, nDisk) + 1;
-                    de((i-1)*nDisk*2 + j, :) = [j1, j2];
-                    de((i-1)*nDisk*2 + nDisk + j, :) = [tipIdx, j1];
+                propR = L * 0.35;
+                nPts = 24;
+                th = (0:nPts-1) * 2*pi / nPts;
+                circX = propR * cos(th);
+                circY = propR * sin(th);
+                for i = 1:4
+                    handles{nxt} = patch('Parent', hg, ...
+                        'XData', circX + armPos(i,1), 'YData', circY + armPos(i,2), ...
+                        'ZData', zeros(1, nPts) + armPos(i,3), ...
+                        'FaceColor', propColor, 'EdgeColor', propColor, ...
+                        'FaceAlpha', 0.3, 'LineWidth', 1);
+                    nxt = nxt + 1;
                 end
-            end
 
-            faces = [bf; df];
-            edges = [be; ae; de];
+                obj.BodyGraphics = handles;
+            end
         end
 
         function dstate = computeDynamics(obj, ~, state, control)
@@ -293,30 +279,8 @@ classdef Quadcopter < robot.AerialRobot
         end
 
         function hg = plot(obj, ax)
-            %PLOT  Build full quadcopter visual: body, arms, rotors, nose.
             hg = plot@robot.Robot(obj, ax);
-            [verts, faces, edges] = obj.buildGeometry();
-            patch('Parent', hg, 'Vertices', verts, 'Faces', faces, ...
-                  'FaceColor', [0.8 0.8 0.9], 'EdgeColor', 'none');
-            for i = 1:size(edges, 1)
-                line('Parent', hg, ...
-                     'XData', verts(edges(i,:), 1), ...
-                     'YData', verts(edges(i,:), 2), ...
-                     'ZData', verts(edges(i,:), 3), ...
-                     'Color', 'k', 'LineWidth', 1.5);
-            end
-
-            r = [obj.armLength, -obj.armLength, 0;
-                 obj.armLength,  obj.armLength, 0;
-                -obj.armLength, -obj.armLength, 0;
-                -obj.armLength,  obj.armLength, 0];
-            [cx, cy, cz] = cylinder(0.015, 8);
-            cz = cz * 0.03 - 0.015;
-            for i = 1:4
-                obj.RotorGraphics{i} = surf(cx + r(i,1), cy + r(i,2), cz + r(i,3), ...
-                    'Parent', hg, ...
-                    'FaceColor', [0.2 0.2 0.2], 'EdgeColor', 'none');
-            end
+            obj.buildGeometry(hg);
 
             bx = obj.bodySize(1)/2;
             bz = obj.bodySize(3)/2;
