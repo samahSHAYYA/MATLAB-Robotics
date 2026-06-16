@@ -47,7 +47,7 @@ See `.agent/tasks.json` for live status. Current phase: 00 (scaffold complete).
 - `hgtransform` + `Matrix` property for fast wireframe transforms.
 - `drawnow` + `pause` throttling for animation loops (not `drawnow limitrate`).
 - Quaternion operations use manual formulas in `robot.Utils` (no built-in `quaternion` class dependency for cross-version compatibility).
-- Package `+robot/` means `import robot.*` at top of all consuming scripts.
+- Package `+robot/` means explicit `import robot.ClassName` at top of consuming scripts — no wildcard imports.
 
 ## Agents
 

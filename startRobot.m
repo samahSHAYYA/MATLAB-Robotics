@@ -21,7 +21,12 @@ function startRobot(robotType)
         robotType string = 'DifferentialDrive'
     end
 
-    import robot.*
+    import robot.DifferentialDrive
+    import robot.Quadcopter
+    import robot.Quadruped
+    import robot.Humanoid
+    import robot.Visualizer
+    import robot.Controller
 
     switch robotType
         case 'DifferentialDrive'
