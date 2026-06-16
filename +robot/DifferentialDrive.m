@@ -1,4 +1,9 @@
 classdef DifferentialDrive < robot.GroundRobot
+    %DIFFERENTIALDRIVE  Planar 2-DOF wheeled robot (x-translation + yaw).
+    %   Control: [torque_left; torque_right] applied at wheels.
+    %   Dynamics models net forward force from wheel torques and yaw
+    %   torque from differential wheel speeds.
+
     properties
         wheelRadius (1,1) double
         trackWidth  (1,1) double
@@ -9,18 +14,26 @@ classdef DifferentialDrive < robot.GroundRobot
 
     methods
         function obj = DifferentialDrive(params)
+            %DIFFERENTIALDRIVE  Construct from parameter struct.
+            %   Fields: params.geometric.{wheelRadius, trackWidth}
+            %           params.dynamic.{mass, inertia, maxTorque}
             arguments
                 params (1,1) struct
             end
-            obj@robot.GroundRobot(params);
-            obj.wheelRadius = params.geometry.wheelRadius;
-            obj.trackWidth = params.geometry.trackWidth;
-            obj.mass = params.dynamics.mass;
-            obj.inertia = params.dynamics.inertia;
-            obj.maxTorque = params.dynamics.maxTorque;
+            obj@robot.GroundRobot();
+            obj.wheelRadius = params.geometric.wheelRadius;
+            obj.trackWidth = params.geometric.trackWidth;
+            obj.mass = params.dynamic.mass;
+            obj.inertia = params.dynamic.inertia;
+            obj.maxTorque = params.dynamic.maxTorque;
         end
 
         function move(obj, direction, amount)
+            %MOVE  Set left/right wheel torques from direction command.
+            %   FORWARD: both wheels positive.  BACKWARD: both negative.
+            %   LEFT/YAW_LEFT: wheels counter-rotate (spin left).
+            %   RIGHT/YAW_RIGHT: wheels counter-rotate (spin right).
+            %   STOP: zero torque.
             arguments
                 obj
                 direction robot.Direction
@@ -45,6 +58,7 @@ classdef DifferentialDrive < robot.GroundRobot
         end
 
         function [verts, faces, edges] = buildGeometry(obj)
+            %BUILDGEOMETRY  Wireframe for chassis box + left/right wheel blocks.
             bx = 0.2; by = 0.15; bz = 0.05;
             bv = [-bx, -by, -bz;  bx, -by, -bz;  bx,  by, -bz; -bx,  by, -bz;
                   -bx, -by,  bz;  bx, -by,  bz;  bx,  by,  bz; -bx,  by,  bz];
@@ -94,6 +108,10 @@ classdef DifferentialDrive < robot.GroundRobot
         end
 
         function dstate = computeDynamics(obj, t, state, control)
+            %COMPUTEDYNAMICS  Planar drive: forward force + yaw torque.
+            %   F_drive = (tau_L + tau_R) / r_wheel
+            %   T_yaw   = (tau_R - tau_L) * trackWidth / (2 * r_wheel)
+            %   State: only vx (body x) and wz (z-axis) are non-zero.
             vx = state(8);
             wz = state(13);
             q = state(4:7);
@@ -119,8 +137,8 @@ classdef DifferentialDrive < robot.GroundRobot
             dstate = [dpos; dq; dvel_x; dvel_y; dvel_z; domega_x; domega_y; domega_z];
         end
 
-
         function hg = plot(obj, ax)
+            %PLOT  Build wireframe: grey chassis + wheel blocks, edge lines.
             hg = plot@robot.Robot(obj, ax);
             [verts, faces, edges] = obj.buildGeometry();
             patch('Parent', hg, 'Vertices', verts, 'Faces', faces, ...

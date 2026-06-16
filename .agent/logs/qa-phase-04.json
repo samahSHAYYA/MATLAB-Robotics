@@ -62,9 +62,9 @@
       { "id": "QC-17", "description": "Euler equation: I*domega + cross(omega, I*omega) = T", "result": "PASS" },
       { "id": "QC-18", "description": "plot() creates wireframe with light blue FaceColor [0.8 0.8 0.9]", "result": "PASS" }
     ],
-    "demo.m": [
+    "startRobot.m": [
       { "id": "DM-1", "description": "Quadcopter case present with correct params", "result": "PASS" },
-      { "id": "DM-2", "description": "demo('Quadcopter') creates robot.Quadcopter", "result": "PASS" }
+      { "id": "DM-2", "description": "startRobot('Quadcopter') creates robot.Quadcopter", "result": "PASS" }
     ],
     "Integration": [
       { "id": "IN-1", "description": "All files parse without syntax errors", "result": "PASS" },

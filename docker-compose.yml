@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  matlab-test:
+    build: .
+    volumes:
+      - .:/workspace
+    command: >
+      matlab -batch "
+        addpath('tests');
+        results = runtests('tests');
+        disp(table(results));
+        assertSuccess(results);
+      "

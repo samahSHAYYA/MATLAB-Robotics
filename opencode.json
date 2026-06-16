@@ -1,7 +1,6 @@
 {
-  "name": "matlab-robodog",
-  "description": "MATLAB robotic dog project — 6-DOF rigid-body dynamics, wireframe visualization, keyboard control. Supports Quadruped, Quadcopter, and DifferentialDrive robots.",
-  "agents": {
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
     "orchestrator": {
       "promptFile": ".agent/agents/orchestrator.md",
       "allowedTools": ["read", "glob", "grep", "write", "edit", "bash", "task", "todowrite", "webfetch"],
@@ -24,11 +23,12 @@
     }
   },
   "skills": {
-    "matlab-oop":      ".agent/skills/matlab-oop/skill.md",
-    "robot-dynamics":  ".agent/skills/robot-dynamics/skill.md",
-    "wireframe":       ".agent/skills/wireframe/skill.md",
-    "keyboard-control":".agent/skills/keyboard-control/skill.md",
-    "quadruped-ik":    ".agent/skills/quadruped-ik/skill.md",
+    "matlab-oop": ".agent/skills/matlab-oop/skill.md",
+    "robot-dynamics": ".agent/skills/robot-dynamics/skill.md",
+    "wireframe": ".agent/skills/wireframe/skill.md",
+    "keyboard-control": ".agent/skills/keyboard-control/skill.md",
+    "quadruped-ik": ".agent/skills/quadruped-ik/skill.md",
+    "humanoid-ik": ".agent/skills/humanoid-ik/skill.md",
     "task-management": ".agent/skills/task-management/skill.md"
   }
 }

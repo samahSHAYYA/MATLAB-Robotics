@@ -29,10 +29,10 @@
     },
     {
       "id": "03",
-      "name": "Controller + demo.m",
-      "description": "Create Controller (keyboard handler, real-time loop) and demo.m entry point for DifferentialDrive.",
+      "name": "Controller + startRobot.m",
+      "description": "Create Controller (keyboard handler, real-time loop) and startRobot.m entry point for DifferentialDrive.",
       "status": "completed",
-      "files": ["+robot/Controller.m", "demo.m"],
+      "files": ["+robot/Controller.m", "startRobot.m"],
       "verified_by": "QA",
       "blocker_reason": null
     },
@@ -67,27 +67,54 @@
       "id": "07",
       "name": "Quadruped IK + leg animation",
       "description": "Implement analytic IK for 3-link legs, animate legs synchronised to body motion.",
-      "status": "pending",
+      "status": "completed",
       "files": ["+robot/Quadruped.m"],
-      "verified_by": null,
+      "verified_by": "developer",
       "blocker_reason": null
     },
     {
       "id": "08",
       "name": "Quadruped trot gait + full keyboard control",
       "description": "Implement trot gait (diagonal leg pairs), integrate with Controller for interactive control.",
-      "status": "pending",
-      "files": ["+robot/Quadruped.m", "+robot/Controller.m", "demo.m"],
-      "verified_by": null,
+      "status": "completed",
+      "files": ["+robot/Quadruped.m", "+robot/Controller.m", "startRobot.m"],
+      "verified_by": "developer",
       "blocker_reason": null
     },
     {
       "id": "09",
       "name": "Polish: physics tuning, visual refinements, edge cases",
       "description": "Tune physics parameters, refine wireframe visuals, handle edge cases, final testing.",
-      "status": "pending",
-      "files": ["+robot/*.m", "demo.m"],
-      "verified_by": null,
+      "status": "completed",
+      "files": ["+robot/*.m", "startRobot.m"],
+      "verified_by": "developer",
+      "blocker_reason": null
+    },
+    {
+      "id": "10",
+      "name": "Humanoid body dynamics + leg geometry",
+      "description": "Create Humanoid with 6-DOF trunk dynamics, 2-link bipedal leg geometry, spring-damper ground contact.",
+      "status": "completed",
+      "files": ["+robot/Humanoid.m"],
+      "verified_by": "developer",
+      "blocker_reason": null
+    },
+    {
+      "id": "11",
+      "name": "Humanoid IK + bipedal walking gait",
+      "description": "Implement analytic IK for 2-link bipedal legs, walking gait with balance control.",
+      "status": "completed",
+      "files": ["+robot/Humanoid.m"],
+      "verified_by": "developer",
+      "blocker_reason": null
+    },
+    {
+      "id": "12",
+      "name": "Humanoid full keyboard control + integration",
+      "description": "Integrate Humanoid with Controller, update startRobot.m, full keyboard control for walking.",
+      "status": "completed",
+      "files": ["+robot/Humanoid.m", "+robot/Controller.m", "startRobot.m"],
+      "verified_by": "developer",
       "blocker_reason": null
     }
   ]

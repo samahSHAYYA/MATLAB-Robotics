@@ -35,7 +35,7 @@ clear()                   → remove all robot graphics
 ## `robot.Controller`
 
 ```
-Controller(fig, robot, visualizer)  → constructor, binds key handler
+Controller(fig, robot, visualizer)  → constructor, binds key handler (arrows, G toggles gait on Humanoid)
 run()                               → start real-time control loop
 stop()                              → exit the loop
 setCommand(dir, amount)             → programmatic command (non-keyboard)
@@ -49,11 +49,50 @@ step(robot, t, dt)                  → integrate robot dynamics by dt
 rk4Step(dynFun, t, state, control, dt) → static: single RK4 step
 ```
 
-## `demo.m` (entry point)
+## `startRobot.m` (entry point)
 
 ```
-demo()                              → default to Quadruped
-demo('Quadruped')                   → robodog with gait
-demo('Quadcopter')                  → aerial 6-DOF
-demo('DifferentialDrive')           → planar wheeled
+startRobot()                              → default to Quadruped
+startRobot('Quadruped')                   → quadruped with gait
+startRobot('Quadcopter')                  → aerial 6-DOF
+startRobot('DifferentialDrive')           → planar wheeled
+startRobot('Humanoid')                    → bipedal walking
+```
+
+## `robot.GroundRobot` (abstract handle)
+
+```
+GroundRobot(params)           → constructor (3-DOF planar constraint)
+step(t, dt)                   → RK4 integration (overrides Robot.step)
+getControlDim()               → returns 2 (protected)
+```
+
+## `robot.AerialRobot` (abstract handle)
+
+```
+AerialRobot(params)           → constructor (full 6-DOF)
+step(t, dt)                   → RK4 integration (overrides Robot.step)
+hover()                       → zero control vector
+```
+
+## `robot.Humanoid` (handle)
+
+```
+Humanoid(params)             → constructor (bipedal, 6-DOF trunk dynamics)
+move(direction, amount)       → 6-axis body wrench (same as Quadruped)
+step(t, dt)                   → gait phase + IK + physics + wireframe
+toggleGait()                  → enable/disable walking gait
+reset()                       → restore initial conditions
+buildGeometry()               → returns [verts, faces, edges] with foot boxes
+computeDynamics(t, state, ctrl) → full 6-DOF with bipedal foot contact
+plot(ax)                      → render wireframe in axes
+getControlDim()               → returns 6
+```
+
+## `robot.Collision` (static methods)
+
+```
+checkOBB(centerA, quatA, halfA, centerB, quatB, halfB) → SAT overlap test
+robotOBB(robot)               → get OBB center + half-size from robot
+checkAll(robots, useParallel)  → pairwise collision matrix
 ```

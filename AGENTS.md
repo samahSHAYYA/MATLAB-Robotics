@@ -1,13 +1,15 @@
 # AGENTS.md
 
-MATLAB robotics demo project — 6-DOF rigid-body dynamics with wireframe visualization and keyboard control.
+MATLAB robotics demo project — 6-DOF rigid-body dynamics with wireframe 
+visualization and keyboard control.
 
 ## Quick start
 
 ```
-demo('Quadruped')            % flagship — robodog with gait
-demo('Quadcopter')           % aerial 6-DOF
-demo('DifferentialDrive')    % planar wheeled
+startRobot('Quadruped')            % flagship — robot with gait
+startRobot('Quadcopter')           % aerial 6-DOF
+startRobot('DifferentialDrive')    % planar wheeled
+startRobot('Humanoid')             % bipedal walking
 ```
 
 ## Repository structure
@@ -31,7 +33,7 @@ See `.agent/tasks.json` for live status. Current phase: 00 (scaffold complete).
 ## Key rules
 
 1. **Read decisions first** — check `docs/adr/` and `.agent/logs/` before starting any phase.
-2. **ADR required** — any non-trivial design choice needs an ADR in `docs/adr/`. Use `docs/adr/scripts/new-adr.m` to scaffold.
+2. **ADR required** — any non-trivial design choice needs an ADR in `docs/adr/`. Use `docs/adr/templates/adr-template.md` to scaffold.
 3. **Skills load before work** — load the relevant skill for your domain before writing code.
 4. **No force push, no amend** — each phase is one clean commit on `master`.
 5. **QA signs off** — no phase is complete until QA verifies it.
@@ -63,4 +65,5 @@ See `.agent/tasks.json` for live status. Current phase: 00 (scaffold complete).
 | Wireframe | `opencode skill wireframe` | Before working on visualization |
 | Keyboard Control | `opencode skill keyboard-control` | Before working on controller/demo |
 | Quadruped IK | `opencode skill quadruped-ik` | Before implementing leg IK |
+| Humanoid IK | `opencode skill humanoid-ik` | Before implementing bipedal IK |
 | Task Management | `opencode skill task-management` | Before updating tasks.json |

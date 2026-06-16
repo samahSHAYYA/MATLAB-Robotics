@@ -1,0 +1,12 @@
+.git
+.gitignore
+.gitattributes
+.agent/
+qa/
+*.log
+*.m~
+*.asv
+*.swp
+.DS_Store
+Thumbs.db
+node_modules/

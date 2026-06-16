@@ -1,0 +1,14 @@
+{
+  "phase": "12",
+  "component": "Humanoid full keyboard control + integration",
+  "date": "2026-06-15",
+  "verdict": "IMPLEMENTED",
+  "checked_by": "developer",
+  "notes": [
+    "Integrated Humanoid with Controller: 'g' key toggles gait for both Quadruped and Humanoid.",
+    "Updated startRobot.m with Humanoid parameter case and help text.",
+    "Updated all docs (README, AGENTS.md, architecture, API, demo-guide, interaction) to list Humanoid.",
+    "Added humanoid-ik skill and tasks.json phases 10-12."
+  ],
+  "blocker_reason": null
+}

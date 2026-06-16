@@ -4,8 +4,8 @@
 
 | Key | Action | Affects |
 |---|---|---|
-| ↑ | FORWARD (body +x) | All |
-| ↓ | BACKWARD (body -x) | All |
+| ↑ | FORWARD (body +y) | All |
+| ↓ | BACKWARD (body -y) | All |
 | ← | YAW_LEFT (rotate -z) | All |
 | → | YAW_RIGHT (rotate +z) | All |
 | W | UP (world +z) | Aerial only |
@@ -15,10 +15,13 @@
 | Q | PITCH_UP (rotate -y) | Aerial only |
 | E | PITCH_DOWN (rotate +y) | Aerial only |
 | Space | STOP / HOVER | All |
+| G | Toggle gait on/off | Humanoid only (others ignore) |
 | R | RESET initial pose | All |
 | Esc | Close demo | All |
 
-Ground robots (Quadruped, DifferentialDrive) ignore aerial-only commands silently.
+Ground robots (Quadruped, DifferentialDrive, Humanoid) ignore aerial-only commands silently.
+
+**Forward axis:** All ground robots use +Y as forward (body depth axis). Humanoid torso is proportioned so the thinnest dimension (depth) faces forward, matching human body proportions.
 
 ## Direction enum
 

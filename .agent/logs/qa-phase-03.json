@@ -1,6 +1,6 @@
 {
   "phase": "03",
-  "component": "Controller + demo.m",
+  "component": "Controller + startRobot.m",
   "date": "2026-06-08",
   "verdict": "PASS",
   "checked_by": "QA",
@@ -55,10 +55,10 @@
         "detail": "RenderDt default 0.02 (50 FPS / 20 ms) at line 8"
       }
     },
-    "demo.m": {
+    "startRobot.m": {
       "default_argument": {
         "pass": true,
-        "detail": "robotType defaults to 'DifferentialDrive' at line 3; callable as demo() or demo('DifferentialDrive')"
+        "detail": "robotType defaults to 'DifferentialDrive' at line 3; callable as startRobot() or startRobot('DifferentialDrive')"
       },
       "params_struct": {
         "pass": true,
@@ -66,7 +66,7 @@
       },
       "figure_properties": {
         "pass": true,
-        "detail": "Figure with white background (Color='white'), correct title (Name='matlab-robodog: DifferentialDrive') at lines 20-23"
+        "detail": "Figure with white background (Color='white'), correct title (Name='matlab-robotics: DifferentialDrive') at lines 20-23"
       },
       "Visualizer_created": {
         "pass": true,
@@ -96,11 +96,11 @@
     "Integration": {
       "all_files_parse": {
         "pass": true,
-        "detail": "By inspection: Controller.m (81 lines), demo.m (35 lines), DifferentialDrive.m (152 lines), Visualizer.m (53 lines), Robot.m (72 lines), Direction.m (10 lines), DynamicsEngine.m (26 lines), Utils.m (44 lines) — all syntactically valid MATLAB"
+        "detail": "By inspection: Controller.m (81 lines), startRobot.m (35 lines), DifferentialDrive.m (152 lines), Visualizer.m (53 lines), Robot.m (72 lines), Direction.m (10 lines), DynamicsEngine.m (26 lines), Utils.m (44 lines) — all syntactically valid MATLAB"
       },
       "import_robot_works": {
         "pass": true,
-        "detail": "import robot.* at demo.m line 6 resolves all classes in +robot/ package"
+        "detail": "import robot.* at startRobot.m line 6 resolves all classes in +robot/ package"
       },
       "DifferentialDrive_move_UP_noop": {
         "pass": true,
@@ -117,7 +117,7 @@
     }
   },
   "notes": [
-    "demo.m sets KeyPressFcn=[] in figure constructor to prevent default key handling; Controller then binds WindowKeyPressFcn. This is consistent with the keyboard-control skill guidance.",
+    "startRobot.m sets KeyPressFcn=[] in figure constructor to prevent default key handling; Controller then binds WindowKeyPressFcn. This is consistent with the keyboard-control skill guidance.",
     "Controller.onKeyPress uses 'escape' to call obj.onClose() directly (not via CloseRequestFcn). The onClose method signature with ~ args handles both call patterns.",
     "No ADR 0003 found for Phase 03; the implementation follows the interaction design in docs/guide/interaction.md and the keyboard-control skill."
   ],

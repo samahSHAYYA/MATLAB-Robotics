@@ -101,9 +101,9 @@ Three changes, all mechanical:
 
 Everything else — `properties`, `move`, `buildGeometry`, `computeDynamics`, `plot` — remains identical.
 
-### 3. No changes to `demo.m` or `Controller.m`
+### 3. No changes to `startRobot.m` or `Controller.m`
 
-The re-parenting is transparent to consumers. `demo('DifferentialDrive')` continues to work because `DifferentialDrive` is still `isa(robot.Robot)` (through `GroundRobot ← Robot`). No consumer code checks for `DifferentialDrive` by its parent class name.
+The re-parenting is transparent to consumers. `startRobot('DifferentialDrive')` continues to work because `DifferentialDrive` is still `isa(robot.Robot)` (through `GroundRobot ← Robot`). No consumer code checks for `DifferentialDrive` by its parent class name.
 
 ## Consequences
 

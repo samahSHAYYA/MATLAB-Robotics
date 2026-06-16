@@ -6,7 +6,7 @@
 
 ## Context
 
-Phase 03 delivered the interactive `Controller` + `demo.m` for `DifferentialDrive`. Phase 04 must deliver the first aerial robot (`Quadcopter` — a 6-DOF quadrotor) and an intermediate abstract base (`AerialRobot`) that marks the semantic distinction between ground and aerial vehicles.
+Phase 03 delivered the interactive `Controller` + `startRobot.m` for `DifferentialDrive`. Phase 04 must deliver the first aerial robot (`Quadcopter` — a 6-DOF quadrotor) and an intermediate abstract base (`AerialRobot`) that marks the semantic distinction between ground and aerial vehicles.
 
 Three design forces:
 
@@ -295,9 +295,9 @@ end
 
 Same pattern as `DifferentialDrive.plot`. Slightly different `FaceColor` (`[0.8 0.8 0.9]` = light blue-grey) to visually distinguish aerial from ground robots.
 
-### 3. Demo integration (`demo.m`)
+### 3. Demo integration (`startRobot.m`)
 
-The `demo.m` file (Phase 03) must be updated to add a `'Quadcopter'` case:
+The `startRobot.m` file (Phase 03) must be updated to add a `'Quadcopter'` case:
 
 ```matlab
 case 'Quadcopter'
@@ -311,7 +311,7 @@ case 'Quadcopter'
     robot.Quadcopter(params);
 ```
 
-This is an additive change to `demo.m`; existing `'DifferentialDrive'` case is unchanged.
+This is an additive change to `startRobot.m`; existing `'DifferentialDrive'` case is unchanged.
 
 ### 4. File structure
 
@@ -328,7 +328,7 @@ This is an additive change to `demo.m`; existing `'DifferentialDrive'` case is u
   Visualizer.m          (Phase 01)
 ```
 
-No changes to existing Phase 01–03 files except `demo.m` (additive case).
+No changes to existing Phase 01–03 files except `startRobot.m` (additive case).
 
 ### 5. Verification criteria
 
@@ -349,7 +349,7 @@ A minimal validation script (`test_quadcopter.m`, placed under `.agent/skills/ro
 - `Quadcopter` inherits from `AerialRobot`, not directly from `Robot`, keeping the hierarchy consistent with `docs/guide/architecture.md`.
 - The full 6-DOF `computeDynamics` with coriolis terms is physically accurate enough for demonstration and education, while leaving room for aerodynamic refinements in Phase 09.
 - The `kTorque` parameter is exposed in `params.dynamics`, making it tuneable without code changes.
-- `demo.m` gets an additive `'Quadcopter'` case — no breaking changes to the existing DifferentialDrive flow.
+- `startRobot.m` gets an additive `'Quadcopter'` case — no breaking changes to the existing DifferentialDrive flow.
 - Phase 05 will add `GroundRobot` as a sibling of `AerialRobot` and re-parent `DifferentialDrive`, making the hierarchy complete.
 
 ## Files created

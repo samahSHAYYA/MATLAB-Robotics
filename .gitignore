@@ -36,6 +36,9 @@ tmp/
 *.so
 *.dylib
 
+# QA (local verification only)
+qa/
+
 # Export
 export/
 output/

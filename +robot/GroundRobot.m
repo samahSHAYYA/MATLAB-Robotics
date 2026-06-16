@@ -1,15 +1,20 @@
 classdef GroundRobot < robot.Robot
+    %GROUNDROBOT  Intermediate base for ground robots.
+    %   Provides a variable-dimension control vector and RK4 step().
+    %   Default control dimension is 2 (DifferentialDrive); override
+    %   getControlDim() for more (Quadruped uses 6).
 
     methods
-        function obj = GroundRobot(params)
-            arguments
-                params (1,1) struct
-            end
-            obj@robot.Robot(params);
+        function obj = GroundRobot()
+            %GROUNDROBOT  Construct with default 2-element zero control.
+            obj@robot.Robot();
             obj.Control = zeros(2, 1);
         end
 
         function step(obj, t, dt)
+            %STEP  Integrate dynamics one step via RK4.
+            %   Reads obj.Control, adapts dimension via getControlDim().
+            %   Inputs: t  - current time (s), dt - step size (s)
             arguments
                 obj
                 t (1,1) double
@@ -28,6 +33,7 @@ classdef GroundRobot < robot.Robot
 
     methods (Access = protected)
         function n = getControlDim(obj)
+            %GETCONTROLDIM  Control vector dimension (override for n ≠ 2).
             n = 2;
         end
     end

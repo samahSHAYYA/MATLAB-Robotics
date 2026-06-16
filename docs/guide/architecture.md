@@ -6,7 +6,8 @@
 Robot (abstract, handle)
  ├── GroundRobot (abstract)    ← planar constraint, z=0, no roll/pitch
  │   ├── Quadruped              ← 3-link legs, IK, trot gait
- │   └── DifferentialDrive      ← 2-wheel torque model
+ │   ├── DifferentialDrive      ← 2-wheel torque model
+ │   └── Humanoid               ← bipedal 2-leg IK, walking gait
  └── AerialRobot (abstract)    ← full 6-DOF
      └── Quadcopter             ← 4-rotor thrust + torque
 ```
@@ -36,6 +37,7 @@ Control vectors are robot-specific:
 | DifferentialDrive | [leftWheelTorque, rightWheelTorque] | 2 |
 | Quadcopter | [thrust1, thrust2, thrust3, thrust4] | 4 |
 | Quadruped | [Fx, Fy, Fz, Tx, Ty, Tz] (body frame) | 6 |
+| Humanoid  | [Fx, Fy, Fz, Tx, Ty, Tz] (body frame) | 6 |
 
 ## Visualization
 
@@ -43,6 +45,10 @@ Control vectors are robot-specific:
 - 4x4 transform matrix updated each frame (no object recreation)
 - `drawnow limitrate` for non-blocking animation
 - Simple ground plane grid for spatial reference
+
+### Forward axis
+
+All robots use +Y as the forward direction. For the Humanoid, the torso is proportioned with the deepest dimension along Z (height, 0.8 m), the second-largest along Y (forward depth, ~0.1 m), and the narrowest along X (lateral width, 0.4 m), matching human proportions.
 
 ## Control loop
 

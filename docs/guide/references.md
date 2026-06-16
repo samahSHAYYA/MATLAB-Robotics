@@ -35,3 +35,15 @@
 | Phase | Date | Change |
 |---|---|---|
 | 00 | 2026-06-08 | Initial scaffold |
+| 01 | 2026-06-08 | Direction, Utils, Robot (abstract), Visualizer |
+| 02 | 2026-06-08 | DifferentialDrive + DynamicsEngine |
+| 03 | 2026-06-08 | Controller + startRobot.m |
+| 04 | 2026-06-08 | Quadcopter + AerialRobot |
+| 05 | 2026-06-08 | GroundRobot abstraction |
+| 06 | 2026-06-08 | Quadruped body + leg geometry |
+| 07 | 2026-06-08 | Quadruped IK + leg animation |
+| 08 | 2026-06-08 | Quadruped trot gait + keyboard control |
+| 09 | 2026-06-08 | Polish: physics, visuals, edge cases |
+| 10 | 2026-06-16 | Humanoid body dynamics + leg geometry |
+| 11 | 2026-06-16 | Humanoid IK + bipedal walking gait |
+| 12 | 2026-06-16 | Humanoid keyboard control + integration |

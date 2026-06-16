@@ -6,7 +6,7 @@
     "+robot/Quadruped.m"
   ],
   "files_modified": [
-    "demo.m"
+    "startRobot.m"
   ],
   "adrs": ["docs/adr/0005-quadruped-trunk-and-leg-geometry.md"],
   "bugs_fixed": [

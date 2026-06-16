@@ -1,0 +1,13 @@
+{
+  "phase": "10",
+  "component": "Humanoid body dynamics + leg geometry",
+  "date": "2026-06-15",
+  "verdict": "IMPLEMENTED",
+  "checked_by": "developer",
+  "notes": [
+    "Created +robot/Humanoid.m with 2-link bipedal leg geometry, 6-DOF rigid-body dynamics, spring-damper foot contact.",
+    "Humanoid inherits from GroundRobot with 6-axis control wrench [Fx, Fy, Fz, Tx, Ty, Tz].",
+    "Parameters: torso 0.8x0.4m, thigh/shin 0.35m each, mass 30 kg."
+  ],
+  "blocker_reason": null
+}

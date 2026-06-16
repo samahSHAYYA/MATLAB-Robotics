@@ -1,13 +1,14 @@
-# matlab-robodog
+# matlab-robotics
 
-6-DOF rigid-body dynamics simulation with wireframe visualization and keyboard control. Demonstrates robotics capability through three robot types: **Quadruped**, **Quadcopter**, and **DifferentialDrive**.
+6-DOF rigid-body dynamics simulation with wireframe visualization and keyboard control. Demonstrates robotics capability through four robot types: **Quadruped**, **Quadcopter**, **DifferentialDrive**, and **Humanoid**.
 
 ## Quick start
 
 ```matlab
-demo('Quadruped')            % flagship — robodog with gait
-demo('Quadcopter')           % aerial 6-DOF
-demo('DifferentialDrive')    % planar wheeled
+startRobot('Quadruped')            % flagship — quadruped with gait
+startRobot('Quadcopter')           % aerial 6-DOF
+startRobot('DifferentialDrive')    % planar wheeled
+startRobot('Humanoid')             % bipedal walking
 ```
 
 ## Documentation
@@ -24,12 +25,21 @@ demo('DifferentialDrive')    % planar wheeled
 ## Project structure
 
 ```
-+robot/          ← MATLAB package (all classes)
++robot/          ← MATLAB package (source)
 .agent/          ← OpenCode agent system
 docs/            ← ADRs + guide docs
+qa/              ← QA verification scripts (local only, gitignored)
 resources/       ← images, schemas, 3D models
-demo.m           ← entry point
+tests/           ← Unit tests (mirrors +robot/ package structure)
+startRobot.m     ← entry point
 opencode.json    ← agent/skill definitions
+```
+
+## Running tests
+
+```matlab
+addpath('tests');
+runtests('tests')
 ```
 
 ## System requirements

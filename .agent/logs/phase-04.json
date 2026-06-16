@@ -7,7 +7,7 @@
     "+robot/Quadcopter.m"
   ],
   "files_modified": [
-    "demo.m"
+    "startRobot.m"
   ],
   "adrs": ["docs/adr/0003-quadcopter-and-aerialrobot.md"],
   "bugs_fixed": [

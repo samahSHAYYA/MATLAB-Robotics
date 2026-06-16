@@ -72,7 +72,7 @@
       "id": "12",
       "description": "All files parse without syntax errors",
       "result": "PASS",
-      "detail": "MATLAB loaded all +robot/*.m classes and demo.m without errors; syntax validated"
+      "detail": "MATLAB loaded all +robot/*.m classes and startRobot.m without errors; syntax validated"
     }
   ],
   "summary": "All 12 acceptance criteria pass. GroundRobot abstraction correctly inserted between Robot and DifferentialDrive. Hierarchy is symmetric: Robot → GroundRobot → DifferentialDrive and Robot → AerialRobot → Quadcopter. No regressions detected.",

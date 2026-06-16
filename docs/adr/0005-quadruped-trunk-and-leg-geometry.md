@@ -316,7 +316,7 @@ Each leg contributes 2 edges (shoulder→knee, knee→foot). The 4 legs produce 
 
 ### 5. Demo integration
 
-The `demo.m` file (Phase 03) gains a `'Quadruped'` case:
+The `startRobot.m` file (Phase 03) gains a `'Quadruped'` case:
 
 ```matlab
 case 'Quadruped'
@@ -354,4 +354,4 @@ This is additive — existing `'DifferentialDrive'` and `'Quadcopter'` cases are
 
 ## Files modified
 
-- `demo.m` — additive `'Quadruped'` case (delegated to implementation phase)
+- `startRobot.m` — additive `'Quadruped'` case (delegated to implementation phase)
