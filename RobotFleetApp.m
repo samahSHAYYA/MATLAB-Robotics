@@ -161,10 +161,7 @@ classdef RobotFleetApp < handle
                 'RIGHT', 'BACKWARD', 'UP', 'DOWN'};
             positions = {[2 2], [2 1], [2 3], [3 1], [3 2], [3 3], [4 2], [4 1], [4 3]};
             for j = 1:9
-                btn = uibutton(gl, 'push', 'Text', labels{j}, ...
-                    'FontSize', 11, 'FontWeight', 'bold', ...
-                    'ButtonPushedFcn', @(~,~) app.sendCommand(cmd{j}));
-                btn.Layout.Row = positions{j}(1); btn.Layout.Column = positions{j}(2);
+                app.addCmdButton(gl, labels{j}, cmds{j}, positions{j});
             end
 
             btnLine = uibutton(gl, 'push', 'Text', 'Formation: Line', ...
@@ -391,8 +388,9 @@ classdef RobotFleetApp < handle
                 return;
             end
             r = app.Robots{idx};
-            [obbVerts, obbEdges] = robot.Collision.buildOBB(r);
             ax = app.AxesHandle(idx);
+            if ~isvalid(ax); return; end
+            [obbVerts, obbEdges] = robot.Collision.buildOBB(r);
             if ~isempty(app.BBoxHandles{idx}) && isvalid(app.BBoxHandles{idx})
                 delete(app.BBoxHandles{idx});
             end
@@ -620,6 +618,13 @@ classdef RobotFleetApp < handle
         function onClose(app, ~, ~)
             app.stopSimulation();
             delete(app.Figure);
+        end
+
+        function addCmdButton(app, gl, label, command, pos)
+            btn = uibutton(gl, 'push', 'Text', label, ...
+                'FontSize', 11, 'FontWeight', 'bold', ...
+                'ButtonPushedFcn', @(~,~) app.sendCommand(command));
+            btn.Layout.Row = pos(1); btn.Layout.Column = pos(2);
         end
 
         function updateStatus(app, msg)
