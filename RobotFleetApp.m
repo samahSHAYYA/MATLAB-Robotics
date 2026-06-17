@@ -104,17 +104,17 @@ classdef RobotFleetApp < handle
 
             for i = 1:4
                 [r, c] = ind2sub([2 2], i);
-                ax = uiaxes(app.ViewportGrid);
-                ax.Layout.Row = r; ax.Layout.Column = c;
+                p = uipanel(app.ViewportGrid, 'Title', '', ...
+                    'BorderType', 'line', 'BackgroundColor', [1 1 1]);
+                p.Layout.Row = r; p.Layout.Column = c;
+                ig = uigridlayout(p, [1 1], ...
+                    'Padding', [0 0 0 0], 'RowSpacing', 0, 'ColumnSpacing', 0);
+                ax = uiaxes(ig);
+                ax.Layout.Row = 1; ax.Layout.Column = 1;
                 ax.Visible = 'off';
                 ax.ButtonDownFcn = @(~,~) app.selectRobot(i);
                 app.AxesHandle(i) = ax;
-                app.AxesPanel(i) = uipanel(app.ViewportGrid, 'Title', '', ...
-                    'BorderType', 'line', 'BackgroundColor', [1 1 1]);
-                app.AxesPanel(i).Layout.Row = r;
-                app.AxesPanel(i).Layout.Column = c;
-                app.AxesHandle(i).Parent = app.AxesPanel(i);
-                app.AxesHandle(i).Position = [10 10 1 1];
+                app.AxesPanel(i) = p;
             end
         end
 
@@ -129,18 +129,7 @@ classdef RobotFleetApp < handle
             uilabel(app.LegendGrid, 'Text', '', 'FontSize', 10);
             uilabel(app.LegendGrid, 'Text', 'Robots', 'FontSize', 10, 'FontWeight', 'bold');
             for i = 1:4
-                visCb = uicheckbox(app.LegendGrid, 'Value', 0, ...
-                    'ValueChangedFcn', @(~,~) app.toggleVisibility(i));
-                visCb.Layout.Row = 1+i; visCb.Layout.Column = 1;
-                bboxCb = uicheckbox(app.LegendGrid, 'Value', 0, ...
-                    'ValueChangedFcn', @(~,~) app.toggleBoundingBox(i));
-                bboxCb.Layout.Row = 1+i; bboxCb.Layout.Column = 2;
-                lbl = uilabel(app.LegendGrid, 'Text', '─', ...
-                    'FontSize', 10, 'FontColor', [0.5 0.5 0.5]);
-                lbl.Layout.Row = 1+i; lbl.Layout.Column = 3;
-                app.LegendCheckboxes(i).vis = visCb;
-                app.LegendCheckboxes(i).bbox = bboxCb;
-                app.LegendCheckboxes(i).label = lbl;
+                app.addLegendCheckbox(i);
             end
         end
 
@@ -422,6 +411,9 @@ classdef RobotFleetApp < handle
             end
             app.RobotVisible(idx) = app.LegendCheckboxes(idx).vis.Value;
             r = app.Robots{idx};
+            if ~isprop(r, 'GraphicsTransform') || ~isvalid(r.GraphicsTransform)
+                return;
+            end
             if app.RobotVisible(idx)
                 set(r.GraphicsTransform, 'Visible', 'on');
             else
@@ -618,6 +610,21 @@ classdef RobotFleetApp < handle
         function onClose(app, ~, ~)
             app.stopSimulation();
             delete(app.Figure);
+        end
+
+        function addLegendCheckbox(app, idx)
+            visCb = uicheckbox(app.LegendGrid, 'Value', 0, ...
+                'ValueChangedFcn', @(~,~) app.toggleVisibility(idx));
+            visCb.Layout.Row = 1+idx; visCb.Layout.Column = 1;
+            bboxCb = uicheckbox(app.LegendGrid, 'Value', 0, ...
+                'ValueChangedFcn', @(~,~) app.toggleBoundingBox(idx));
+            bboxCb.Layout.Row = 1+idx; bboxCb.Layout.Column = 2;
+            lbl = uilabel(app.LegendGrid, 'Text', '─', ...
+                'FontSize', 10, 'FontColor', [0.5 0.5 0.5]);
+            lbl.Layout.Row = 1+idx; lbl.Layout.Column = 3;
+            app.LegendCheckboxes(idx).vis = visCb;
+            app.LegendCheckboxes(idx).bbox = bboxCb;
+            app.LegendCheckboxes(idx).label = lbl;
         end
 
         function addCmdButton(app, gl, label, command, pos)
