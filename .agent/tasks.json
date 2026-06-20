@@ -131,7 +131,7 @@
       "name": "UI responsiveness, async pool, custom spawn, git hooks + docs",
       "description": "Fix UI non-responsiveness (drawnow in simStep), increase status bar, async pool startup, slot-based custom spawn defaults, post-commit hook, WarmStart.md session memory, fleet app architecture docs.",
       "status": "completed",
-      "files": ["RobotFleetApp.m", ".githooks/post-commit", ".githooks/post-checkout", ".githooks/pre-commit", "WarmStart.md", ".gitignore", "docs/guide/architecture.md", "AGENTS.md", "tests/RobotFleetAppTest.m", "tests/runAll.m"],
+      "files": ["RobotFleetApp.m", ".githooks/post-commit", ".githooks/post-checkout", ".githooks/pre-commit", "WarmStart.md", ".gitignore", "docs/guide/architecture.md", "AGENTS.md", "tests/RobotFleetAppTest.m", "tests/runAll.m", "tests/+robot/CollisionTest.m"],
       "verified_by": "QA",
       "blocker_reason": null
     }

@@ -73,8 +73,10 @@ classdef CollisionTest < matlab.unittest.TestCase
             p.dynamic.maxThrust = 2.0;
             r = robot.Quadcopter(p);
             [c, h] = robot.Collision.robotOBB(r);
+            L = r.armLength;
+            eh = [r.bodySize(1)/2 + L; r.bodySize(2)/2 + L; r.bodySize(3)/2];
             testCase.verifyEqual(c, r.State(1:3));
-            testCase.verifyEqual(h, r.bodySize(:)/2);
+            testCase.verifyEqual(h, eh);
         end
 
         function robotOBBQuadruped(testCase)
@@ -91,8 +93,11 @@ classdef CollisionTest < matlab.unittest.TestCase
             p.elastic.b_contact = 50;
             r = robot.Quadruped(p);
             [c, h] = robot.Collision.robotOBB(r);
-            eh = [r.bodyLength; r.bodyWidth; r.bodyHeight] / 2;
-            testCase.verifyEqual(c, r.State(1:3));
+            legExt = r.legLength1 + r.legLength2;
+            ec = r.State(1:3); ec(3) = ec(3) - legExt/2;
+            eh = [r.bodyLength/2; max(r.bodyWidth, r.shoulderWidth)/2; ...
+                  (r.bodyHeight + legExt)/2];
+            testCase.verifyEqual(c, ec);
             testCase.verifyEqual(h, eh);
         end
 
