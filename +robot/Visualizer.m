@@ -7,6 +7,7 @@ classdef Visualizer < handle
         TransformGroup  (1,1) matlab.graphics.primitive.Transform
         Robots                 cell
         GroundHandle    (1,1) matlab.graphics.primitive.Patch
+        CameraMode      (1,1) string = "free"
     end
 
     methods
@@ -48,7 +49,7 @@ classdef Visualizer < handle
             obj.Robots{end + 1} = rbt;
         end
 
-        function update(~, rbt)
+        function update(obj, rbt)
             %UPDATE  Update the robot's 4×4 transform from its current state.
             %   Computes R = quatToRotmx(State(4:7)), extracts position
             %   from State(1:3), and applies the result to the robot's
@@ -59,6 +60,9 @@ classdef Visualizer < handle
             T(1:3, 1:3) = R;
             T(1:3, 4) = pos;
             rbt.GraphicsTransform.Matrix = T;
+            if ismethod(rbt, 'updateVisuals')
+                rbt.updateVisuals(obj.AxesHandle);
+            end
         end
 
         function clear(obj)

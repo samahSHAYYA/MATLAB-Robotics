@@ -343,6 +343,31 @@ classdef Quadruped < robot.GroundRobot
                 'YData', [0, 0], ...
                 'ZData', [0, 0], ...
                 'Color', [0.9 0.1 0.1], 'LineWidth', 2);
+
+            axH = ancestor(ax, 'axes');
+            nPts = 24;
+            th = (0:nPts-1) * 2*pi / nPts;
+            rx = obj.bodyLength * 0.35; ry = obj.bodyWidth * 0.5;
+            cx = rx * cos(th); cy = ry * sin(th);
+            obj.ShadowHandle = patch(axH, cx, cy, zeros(1,nPts), ...
+                [0.3 0.3 0.3], 'FaceAlpha', 0.12, 'EdgeColor', 'none');
+            set(obj.ShadowHandle, 'UserData', struct('baseX', cx, 'baseY', cy));
+
+            obj.TrailHandle = line(axH, NaN, NaN, NaN, ...
+                'Color', [0.18 0.80 0.44], 'LineWidth', 1.5);
+
+            bx = obj.bodyLength/2; by = obj.bodyWidth/2; bz = obj.bodyHeight/2;
+            lr = 0.02; ln = 8; lt = (0:ln-1)*2*pi/ln;
+            obj.RunningLightHandles = cell(1, 4);
+            for si = [-1, 1]
+                idx = (si+3)/2*2;
+                obj.RunningLightHandles{idx-1} = patch(axH, ...
+                    bx + lr*cos(lt), si*by + lr*sin(lt), zeros(1,ln)+bz, ...
+                    [1 0.7 0.1], 'EdgeColor', 'none', 'Visible', 'off');
+                obj.RunningLightHandles{idx} = patch(axH, ...
+                    -bx + lr*cos(lt), si*by + lr*sin(lt), zeros(1,ln)+bz, ...
+                    [0.9 0.1 0.1], 'EdgeColor', 'none', 'Visible', 'off');
+            end
         end
     end
 

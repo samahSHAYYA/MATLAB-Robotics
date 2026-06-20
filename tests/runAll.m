@@ -1,9 +1,22 @@
 function results = runAll
-    addpath('tests');
-    diary('test_output.txt');
-    suite = matlab.unittest.TestSuite.fromPackage('robot', 'IncludingSubpackages', true);
-    fleetSuite = matlab.unittest.TestSuite.fromClass(?RobotFleetAppTest);
-    suite = [suite; fleetSuite];
+    root = fileparts(fileparts(mfilename('fullpath')));
+    addpath(root);
+    addpath(fullfile(root, 'tests'));
+    diaryFile = fullfile(root, 'test_output.txt');
+    diary(diaryFile);
+    testFolder = fullfile(root, 'tests', '+robot');
+    suite = matlab.unittest.TestSuite.fromFolder(testFolder, 'IncludingSubfolders', true);
+    fleetFile = fullfile(root, 'tests', 'RobotFleetAppTest.m');
+    if isfile(fleetFile)
+        fleetSuite = matlab.unittest.TestSuite.fromFile(fleetFile);
+        suite = [suite(:); fleetSuite(:)];
+    end
+    if isempty(suite)
+        fprintf('No tests found.\n');
+        results = [];
+        diary('off');
+        return;
+    end
     results = run(suite);
     diary('off');
     total = numel(results);
@@ -16,6 +29,6 @@ function results = runAll
             fprintf('  %s\n', results(i).Name);
         end
     else
-        delete('test_output.txt');
+        if isfile(diaryFile); delete(diaryFile); end
     end
 end

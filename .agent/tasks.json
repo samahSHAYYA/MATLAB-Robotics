@@ -134,6 +134,15 @@
       "files": ["RobotFleetApp.m", ".githooks/post-commit", ".githooks/post-checkout", ".githooks/pre-commit", "WarmStart.md", ".gitignore", "docs/guide/architecture.md", "AGENTS.md", "tests/RobotFleetAppTest.m", "tests/runAll.m", "tests/+robot/CollisionTest.m"],
       "verified_by": "QA",
       "blocker_reason": null
+    },
+    {
+      "id": "15",
+      "name": "Visual refinements + controller innovations",
+      "description": "Trail buffer, ground shadow, running lights, HUD overlay, camera modes (chase/orbit/top), path recording/replay. All 4 robot types updated.",
+      "status": "completed",
+      "files": ["+robot/Robot.m", "+robot/Visualizer.m", "+robot/Controller.m", "+robot/DifferentialDrive.m", "+robot/Quadcopter.m", "+robot/Quadruped.m", "+robot/Humanoid.m", "startRobot.m", "docs/adr/0015-visual-refinements-and-controller-innovations.md", "tests/runAll.m"],
+      "verified_by": "QA",
+      "blocker_reason": null
     }
   ]
 }

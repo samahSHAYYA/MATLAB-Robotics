@@ -16,6 +16,9 @@ function startRobot(robotType)
     %     space        Stop/hover
     %     r            Reset to initial pose
     %     g            Toggle gait (quadruped / humanoid)
+    %     h            Toggle HUD overlay
+    %     c            Cycle camera mode
+    %     l            Toggle running lights
     %     esc          Exit
     arguments
         robotType string = 'DifferentialDrive'

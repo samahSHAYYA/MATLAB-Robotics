@@ -142,6 +142,31 @@ classdef DifferentialDrive < robot.GroundRobot
         function hg = plot(obj, ax)
             hg = plot@robot.Robot(obj, ax);
             obj.buildGeometry(hg);
+
+            axH = ancestor(ax, 'axes');
+            nPts = 24;
+            th = (0:nPts-1) * 2*pi / nPts;
+            rx = 0.10; ry = 0.08;
+            cx = rx * cos(th); cy = ry * sin(th);
+            obj.ShadowHandle = patch(axH, cx, cy, zeros(1,nPts), ...
+                [0.3 0.3 0.3], 'FaceAlpha', 0.15, 'EdgeColor', 'none');
+            set(obj.ShadowHandle, 'UserData', struct('baseX', cx, 'baseY', cy));
+
+            obj.TrailHandle = line(axH, NaN, NaN, NaN, ...
+                'Color', [0.91 0.30 0.24], 'LineWidth', 1.5);
+
+            bx = 0.15; by = 0.10;
+            lr = 0.015; ln = 8; lt = (0:ln-1)*2*pi/ln;
+            obj.RunningLightHandles = cell(1, 4);
+            for si = [-1, 1]
+                idx = (si+3)/2*2;
+                obj.RunningLightHandles{idx-1} = patch(axH, ...
+                    bx*0.5 + lr*cos(lt), si*by*0.5 + lr*sin(lt), zeros(1,ln)+0.04, ...
+                    [1 0.7 0.1], 'EdgeColor', 'none', 'Visible', 'off');
+                obj.RunningLightHandles{idx} = patch(axH, ...
+                    -bx*0.5 + lr*cos(lt), si*by*0.5 + lr*sin(lt), zeros(1,ln)+0.04, ...
+                    [0.9 0.1 0.1], 'EdgeColor', 'none', 'Visible', 'off');
+            end
         end
     end
 end

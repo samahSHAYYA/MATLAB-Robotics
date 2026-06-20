@@ -297,6 +297,32 @@ classdef Quadcopter < robot.AerialRobot
                 'YData', [0, 0], ...
                 'ZData', [bz, bz], ...
                 'Color', [0.9 0.1 0.1], 'LineWidth', 2);
+
+            axH = ancestor(ax, 'axes');
+            nPts = 24;
+            th = (0:nPts-1) * 2*pi / nPts;
+            rShadow = obj.armLength * 0.6;
+            cx = rShadow * cos(th); cy = rShadow * sin(th);
+            obj.ShadowHandle = patch(axH, cx, cy, zeros(1,nPts), ...
+                [0.3 0.3 0.3], 'FaceAlpha', 0.12, 'EdgeColor', 'none');
+            set(obj.ShadowHandle, 'UserData', struct('baseX', cx, 'baseY', cy));
+
+            obj.TrailHandle = line(axH, NaN, NaN, NaN, ...
+                'Color', [0.20 0.60 0.86], 'LineWidth', 1.5);
+
+            L = obj.armLength;
+            armPos = [L, -L, 0; L, L, 0; -L, -L, 0; -L, L, 0];
+            lr = 0.02; ln = 8; lt = (0:ln-1)*2*pi/ln;
+            % M1=FR green, M2=FL green, M3=RR red, M4=RL red
+            obj.RunningLightHandles = cell(1, 4);
+            for i = 1:4
+                color = [0.2 0.8 0.2];
+                if i >= 3; color = [0.9 0.1 0.1]; end
+                obj.RunningLightHandles{i} = patch(axH, ...
+                    armPos(i,1) + lr*cos(lt), armPos(i,2) + lr*sin(lt), ...
+                    zeros(1,ln) + armPos(i,3), ...
+                    color, 'EdgeColor', 'none', 'Visible', 'off');
+            end
         end
     end
 end

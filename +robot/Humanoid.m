@@ -338,6 +338,32 @@ classdef Humanoid < robot.GroundRobot
             line('Parent', hg, ...
                 'XData', [0, 0], 'YData', [fd+0.03, fd+0.06], 'ZData', [0, 0], ...
                 'Color', [0.9 0.1 0.1], 'LineWidth', 2);
+
+            axH = ancestor(ax, 'axes');
+            nPts = 24;
+            th = (0:nPts-1) * 2*pi / nPts;
+            rx = obj.bodyWidth * 0.3; ry = obj.hipWidth * 0.3;
+            cx = rx * cos(th); cy = ry * sin(th);
+            obj.ShadowHandle = patch(axH, cx, cy, zeros(1,nPts), ...
+                [0.3 0.3 0.3], 'FaceAlpha', 0.12, 'EdgeColor', 'none');
+            set(obj.ShadowHandle, 'UserData', struct('baseX', cx, 'baseY', cy));
+
+            obj.TrailHandle = line(axH, NaN, NaN, NaN, ...
+                'Color', [0.61 0.35 0.71], 'LineWidth', 1.5);
+
+            bw2 = obj.bodyWidth/2; hw4 = obj.hipWidth/4; bh = obj.bodyHeight;
+            cz = bh * 0.4;
+            lr = 0.025; ln = 8; lt = (0:ln-1)*2*pi/ln;
+            obj.RunningLightHandles = cell(1, 4);
+            for si = [-1, 1]
+                idx = (si+3)/2*2;
+                obj.RunningLightHandles{idx-1} = patch(axH, ...
+                    si*bw2*0.6 + lr*cos(lt), hw4 + lr*sin(lt), zeros(1,ln)+cz, ...
+                    [1 0.7 0.1], 'EdgeColor', 'none', 'Visible', 'off');
+                obj.RunningLightHandles{idx} = patch(axH, ...
+                    si*bw2*0.6 + lr*cos(lt), -hw4 + lr*sin(lt), zeros(1,ln)+cz, ...
+                    [0.9 0.1 0.1], 'EdgeColor', 'none', 'Visible', 'off');
+            end
         end
     end
 

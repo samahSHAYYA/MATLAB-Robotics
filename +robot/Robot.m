@@ -14,6 +14,12 @@ classdef Robot < handle
         InitialState        (13,1) double
         InitialControl      (:,1) double
         GraphicsTransform
+        TrailBuffer         (:,3) double = zeros(0,3)
+        TrailMaxLen         (1,1) double = 300
+        TrailHandle
+        ShadowHandle
+        LightsOn            (1,1) logical = false
+        RunningLightHandles        cell = {}
     end
 
     methods (Abstract)
@@ -52,12 +58,17 @@ classdef Robot < handle
                 ~
             end
             obj.updatePoseFromState();
+            obj.recordTrailPoint();
         end
 
         function reset(obj)
             %RESET  Restore state and control to initial conditions.
             obj.State = obj.InitialState;
             obj.Control = obj.InitialControl;
+            obj.TrailBuffer = zeros(0, 3);
+            if ~isempty(obj.TrailHandle) && ishandle(obj.TrailHandle)
+                set(obj.TrailHandle, 'XData', [], 'YData', [], 'ZData', []);
+            end
             obj.updatePoseFromState();
         end
 
@@ -84,6 +95,64 @@ classdef Robot < handle
             end
             obj.State = s;
             obj.updatePoseFromState();
+            obj.recordTrailPoint();
+        end
+    end
+
+    methods
+        function updateVisuals(obj, ax)
+            %UPDATEVISUALS  Refresh trail line, shadow, and running lights.
+            arguments
+                obj
+                ax (1,1) matlab.graphics.axis.Axes
+            end
+            if ~isempty(obj.TrailHandle) && ishandle(obj.TrailHandle)
+                buf = obj.TrailBuffer;
+                if size(buf, 1) >= 2
+                    set(obj.TrailHandle, ...
+                        'XData', buf(:,1), 'YData', buf(:,2), 'ZData', buf(:,3));
+                end
+            end
+            if ~isempty(obj.ShadowHandle) && ishandle(obj.ShadowHandle)
+                ud = get(obj.ShadowHandle, 'UserData');
+                if isstruct(ud) && isfield(ud, 'baseX') && isfield(ud, 'baseY')
+                    set(obj.ShadowHandle, ...
+                        'XData', ud.baseX + obj.State(1), ...
+                        'YData', ud.baseY + obj.State(2));
+                end
+            end
+            obj.updateRunningLights();
+        end
+
+        function updateRunningLights(obj)
+            if isempty(obj.RunningLightHandles)
+                return;
+            end
+            if ~obj.LightsOn
+                for i = 1:length(obj.RunningLightHandles)
+                    h = obj.RunningLightHandles{i};
+                    if ishandle(h); set(h, 'Visible', 'off'); end
+                end
+                return;
+            end
+            vel = norm(obj.State(8:10));
+            isGait = false;
+            if isprop(obj, 'GaitEnabled') && obj.GaitEnabled
+                isGait = true;
+            end
+            if isGait
+                color = [0.9 0.1 0.1];
+            elseif vel > 0.1
+                color = [0.2 0.8 0.2];
+            else
+                color = [1.0 0.7 0.1];
+            end
+            for i = 1:length(obj.RunningLightHandles)
+                h = obj.RunningLightHandles{i};
+                if ishandle(h)
+                    set(h, 'FaceColor', color, 'Visible', 'on');
+                end
+            end
         end
     end
 
@@ -94,6 +163,17 @@ classdef Robot < handle
             R = robot.Utils.quatToRotmx(obj.State(4:7));
             [roll, pitch, yaw] = robot.Utils.rotmxToRPY(R);
             obj.Pose.orientation = [roll; pitch; yaw];
+        end
+
+        function recordTrailPoint(obj)
+            %RECORDTRAILPOINT  Append current position to trail if moving.
+            vel = obj.State(8:10);
+            if norm(vel) > 0.02
+                obj.TrailBuffer(end+1,:) = obj.State(1:3)';
+                if size(obj.TrailBuffer, 1) > obj.TrailMaxLen
+                    obj.TrailBuffer(1:size(obj.TrailBuffer,1)-obj.TrailMaxLen,:) = [];
+                end
+            end
         end
     end
 end
