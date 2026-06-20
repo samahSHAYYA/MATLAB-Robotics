@@ -1,0 +1,48 @@
+#!/bin/sh
+# post-commit: auto-update WarmStart.md, remind about docs/tasks
+
+WARMSTART="WarmStart.md"
+
+# 1. Append latest commit info to WarmStart.md (if it exists)
+if [ -f "$WARMSTART" ]; then
+    COMMIT_MSG=$(git log -1 --pretty=format:"%s" HEAD)
+    COMMIT_HASH=$(git log -1 --pretty=format:"%h" HEAD)
+    FILES_CHANGED=$(git diff-tree --no-commit-id --name-only -r HEAD | tr '\n' ' ')
+
+    cat >> "$WARMSTART" <<EOF
+
+---
+
+## Commit $COMMIT_HASH — $(date "+%Y-%m-%d %H:%M")
+
+**$COMMIT_MSG**
+
+Files: $FILES_CHANGED
+EOF
+    echo "post-commit: updated $WARMSTART"
+fi
+
+# 2. Remind about doc/task updates
+REMINDER=""
+HAS_DOC=0
+HAS_TASK=0
+for f in $(git diff-tree --no-commit-id --name-only -r HEAD); do
+    case "$f" in
+        +robot/*.m|RobotFleetApp.m|startRobot.m)
+            REMINDER="$REMINDER [DOCS]"
+            HAS_DOC=1
+            ;;
+        .agent/tasks.json)
+            HAS_TASK=1
+            ;;
+    esac
+done
+
+if [ "$HAS_DOC" -eq 1 ]; then
+    echo "post-commit: REMINDER — robot source files changed, update docs/guide/ if needed"
+fi
+if [ "$HAS_TASK" -eq 0 ]; then
+    echo "post-commit: REMINDER — update .agent/tasks.json for completed phases"
+fi
+
+exit 0

@@ -33,7 +33,7 @@ done
 for f in $(git diff --cached --name-only --diff-filter=AM |
            grep '^+robot/[A-Z][A-Za-z]*\.m$'); do
     basename=$(basename "$f" .m)
-    if [ -f "$f" ] && ! grep -q "classdef $basename" "$f" 2>/dev/null; then
+    if [ -f "$f" ] && ! grep -q "classdef.*$basename\b" "$f" 2>/dev/null; then
         echo "ERROR: $f: classdef name '$basename' not found"
         FAILED=1
     fi
@@ -49,6 +49,21 @@ for f in $(git diff --cached --name-only --diff-filter=A); do
         fi
     fi
 done
+
+# 6. tasks.json must be updated when .m source files change
+HAS_M_SOURCE=0
+HAS_TASK_JSON=0
+for f in $(git diff --cached --name-only --diff-filter=AM); do
+    case "$f" in
+        *.m) HAS_M_SOURCE=1 ;;
+        .agent/tasks.json) HAS_TASK_JSON=1 ;;
+    esac
+done
+if [ "$HAS_M_SOURCE" -eq 1 ] && [ "$HAS_TASK_JSON" -eq 0 ]; then
+    echo "ERROR: .m source files changed but .agent/tasks.json is not staged."
+    echo "       Update tasks.json with current phase status before committing."
+    FAILED=1
+fi
 
 if [ "$FAILED" -ne 0 ]; then
     echo "=== pre-commit: FAILED — fix errors and retry ==="

@@ -269,7 +269,7 @@ classdef Humanoid < robot.GroundRobot
                 'FaceColor', [0.61 0.35 0.71], ...
                 'EdgeColor', [0.41 0.20 0.51], 'LineWidth', 1.5);
 
-            [X, Y, Z] = sphere(12);
+            [X, Y, Z] = sphere(8);
             headR = obj.bodyWidth * 0.2;
             hz2 = obj.bodyHeight * 0.85;
             obj.HeadSurf = surf(X*headR, Y*headR, Z*headR + hz2, ...

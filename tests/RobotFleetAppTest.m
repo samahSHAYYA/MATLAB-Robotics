@@ -32,8 +32,9 @@ classdef RobotFleetAppTest < matlab.unittest.TestCase
             testCase.App = app;
             testCase.assertTrue(isvalid(app));
             testCase.assertTrue(isvalid(app.Figure));
-            testCase.assertEqual(numel(app.AxesHandle), 4);
-            testCase.assertEqual(numel(app.AxesPanel), 4);
+            testCase.assertTrue(isvalid(app.SceneAxes));
+            testCase.assertTrue(isvalid(app.ScenePanel));
+            testCase.assertTrue(isempty(app.SceneVisualizer));
         end
 
         function spawnDifferentialDrive(testCase)
@@ -43,7 +44,7 @@ classdef RobotFleetAppTest < matlab.unittest.TestCase
             testCase.assertFalse(isempty(app.Robots{1}));
             testCase.assertEqual(app.RobotVisible(1), true);
             testCase.assertEqual(app.RobotCounter, 1);
-            testCase.assertEqual(app.Robots{1}.Id, "DifferentialDrive_1");
+            testCase.assertEqual(app.Robots{1}.Id, "R1");
         end
 
         function spawnAllTypes(testCase)
@@ -53,7 +54,7 @@ classdef RobotFleetAppTest < matlab.unittest.TestCase
             for i = 1:4
                 app.spawnRobot(types{i});
                 testCase.assertFalse(isempty(app.Robots{i}));
-                testCase.assertEqual(app.Robots{i}.Id, string(sprintf('%s_%d', types{i}, i)));
+                testCase.assertEqual(app.Robots{i}.Id, string(sprintf('R%d', i)));
             end
             testCase.assertEqual(app.RobotCounter, 4);
         end
@@ -141,15 +142,14 @@ classdef RobotFleetAppTest < matlab.unittest.TestCase
             app.simStep();
         end
 
-        function toggleMode(testCase)
+        function targetDropdown(testCase)
             testCase.makeApp();
             app = testCase.App;
-            app.CtrlModeBtn.Value = 1;
-            app.toggleMode();
-            testCase.assertEqual(app.SyncMode, true);
-            app.CtrlModeBtn.Value = 0;
-            app.toggleMode();
-            testCase.assertEqual(app.SyncMode, false);
+            testCase.assertEqual(app.TargetDropdown.Value, 'ALL');
+            app.TargetDropdown.Value = 'R1';
+            testCase.assertEqual(app.TargetDropdown.Value, 'R1');
+            app.TargetDropdown.Value = 'ALL';
+            testCase.assertEqual(app.TargetDropdown.Value, 'ALL');
         end
 
         function quatToRollPitch(testCase)

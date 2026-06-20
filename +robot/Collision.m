@@ -62,20 +62,40 @@ classdef Collision
             %   Uses robot State(1:3) for position, State(4:7) for
             %   orientation, and geometry-dependent half-extents.
             %
-            %   Supported robot types:
-            %     Quadcopter        — bodySize/2
-            %     Quadruped         — [bodyLength, bodyWidth, bodyHeight]/2
-            %     DifferentialDrive — [0.2, 0.15, 0.05]
+            %   Each robot type computes its OBB to fully enclose body,
+            %   limbs, and attachments.  For ground robots with legs the
+            %   center is shifted downward to account for leg extent.
             center = rbt.State(1:3);
 
             if isa(rbt, 'robot.Quadcopter')
-                half = rbt.bodySize(:) / 2;
+                L = rbt.armLength;
+                half = [rbt.bodySize(1)/2 + L; ...
+                        rbt.bodySize(2)/2 + L; ...
+                        rbt.bodySize(3)/2];
+
             elseif isa(rbt, 'robot.Quadruped')
-                half = [rbt.bodyLength; rbt.bodyWidth; rbt.bodyHeight] / 2;
+                legExt = rbt.legLength1 + rbt.legLength2;
+                center(3) = center(3) - legExt / 2;
+                half = [rbt.bodyLength / 2; ...
+                        max(rbt.bodyWidth, rbt.shoulderWidth) / 2; ...
+                        (rbt.bodyHeight + legExt) / 2];
+
             elseif isa(rbt, 'robot.DifferentialDrive')
-                half = [0.2; 0.15; 0.05];
+                % Body centre is at z = 0.04, wheels at z = 0.05 in local
+                % frame w.r.t. State(1:3) which sits on the ground (z=0).
+                center(3) = center(3) + 0.05;
+                half = [0.075; 0.11; 0.05];
+
+            elseif isa(rbt, 'robot.Humanoid')
+                legExt = rbt.thighLength + rbt.shinLength;
+                bw2 = rbt.bodyWidth / 2;
+                hw2 = rbt.hipWidth / 2;
+                half = [max(bw2, hw2 + 0.06); ...
+                        hw2 + 0.06; ...
+                        (rbt.bodyHeight + legExt) / 2];
+
             else
-                half = [0.1; 0.1; 0.1];
+                half = [0.2; 0.2; 0.2];
             end
         end
         function [verts, edges] = buildOBB(rbt)

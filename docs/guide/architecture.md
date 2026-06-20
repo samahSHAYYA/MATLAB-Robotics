@@ -63,3 +63,54 @@ while figure open
     t += dt_render
 end
 ```
+
+## RobotFleetApp
+
+`RobotFleetApp` is a multi-robot dashboard built with `uifigure` and grid layouts. It manages up to 4 robots in a single 3D scene.
+
+### UI layout
+
+```
+┌─────────────────────────────────────────────────┐
+│ Title bar                                        │
+├────────┬───────────────────────────┬─────────────┤
+│ Spawn   │     Scene (3D axes)      │   Control   │
+│ Panel   │                           │   Panel     │
+│ [drop-  │   (single uiaxes with    │  [↑] [↺][↻] │
+│  down]  │    hgtransform parent)   │  [←] [STOP] │
+│ [+Spawn]│                           │  [→] [↓]   │
+│ [+Cust] │                           │  [Formation]│
+│ [-Remove]│                          │  [Reset]   │
+│ [Script] │                          │             │
+├────────┤                           ├─────────────┤
+│ Legend  │                           │  Telemetry  │
+│ ☑ vis ☐bbox R1                      │  Pos/Roll/  │
+│ ☑ vis ☐bbox R2                      │  Pitch/Vel  │
+├────────┴───────────────────────────┴─────────────┤
+│ Status bar: [Status msg] [Pool] [FPS | Sim time] │
+└─────────────────────────────────────────────────┘
+```
+
+### Spawn workflow
+
+| Button | Behavior |
+|--------|----------|
+| `+ Spawn` | Creates robot at slot-based offset `x = -0.45*(n-1) + 0.675`, default Z from constructor. Id = `R{N}` (auto-incremented). |
+| `+ Spawn (Custom...)` | Opens dialog with same defaults but user can rename and set exact position/orientation. |
+| `- Remove Selected` | Deletes robot graphics, clears slot in `app.Robots` cell array. |
+
+### Control routing
+
+Commands flow through a `TargetDropdown` (ALL / R1–R4). In `simStep`:
+1. `drawnow('limitrate')` flushes pending UI events (keyboard, buttons)
+2. Target-matched robots receive `move(dir, amount)`
+3. All active robots step physics (RK4 sub-steps)
+4. Visible robots' `GraphicsTransform.Matrix` is updated
+
+### Timer-based simulation
+
+Uses `timer('ExecutionMode', 'fixedRate')` at `RenderDt` (≈33 ms). A `Busy` guard prevents re-entrant callbacks. `drawnow('limitrate')` at the start of each tick ensures UI callbacks (keyboard, checkboxes) are processed before physics.
+
+### Parallel pool
+
+Started asynchronously via a 0.5s single-shot timer — does not block UI construction. Status shown in the status bar: `Pool: 4w` when active, `Pool: N/A` when unavailable.

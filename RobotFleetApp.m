@@ -2,10 +2,9 @@ classdef RobotFleetApp < handle
     properties
         Figure              matlab.ui.Figure
         MainGrid            matlab.ui.container.GridLayout
-        ViewportGrid        matlab.ui.container.GridLayout
-        AxesPanel           (:,1)
-        AxesHandle          (:,1)
-        Visualizer          (:,1) cell
+        ScenePanel
+        SceneAxes
+        SceneVisualizer     = []
         Robots              cell
         BBoxHandles         cell
         BBoxVisible         (:,1) logical
@@ -13,7 +12,7 @@ classdef RobotFleetApp < handle
         SelectedIdx         (1,1) double = 0
         LegendGrid
         LegendCheckboxes    struct
-        CtrlModeBtn
+        TargetDropdown
         TelemetryGrid       matlab.ui.container.GridLayout
         TelemetryLabels     struct = struct()
         StatusLabel
@@ -26,8 +25,9 @@ classdef RobotFleetApp < handle
         SimTime             (1,1) double = 0
         DesiredDirection    robot.Direction = robot.Direction.STOP
         DesiredAmount       (1,1) double = 0
-        SyncMode            (1,1) logical = false
+        Busy                (1,1) logical = false
         Pool
+        PoolTimer
         PoolAvailable       (1,1) logical = false
         ScriptSchedule
         ScriptIdx           (1,1) double = 0
@@ -51,7 +51,7 @@ classdef RobotFleetApp < handle
                 'WindowKeyPressFcn', @app.onKeyPress, ...
                 'CloseRequestFcn', @app.onClose);
             app.MainGrid = uigridlayout(app.Figure, [7 3], ...
-                'RowHeight', {40, '1x', '1x', '1x', 120, 80, 25}, ...
+                'RowHeight', {40, '1x', '1x', '1x', 120, 80, 40}, ...
                 'ColumnWidth', {200, '1x', 220}, ...
                 'Padding', [8 8 8 8], 'RowSpacing', 6, 'ColumnSpacing', 8);
 
@@ -61,7 +61,7 @@ classdef RobotFleetApp < handle
             titleLabel.Layout.Row = 1; titleLabel.Layout.Column = [1 3];
 
             app.buildSpawnPanel();
-            app.buildViewportGrid();
+            app.buildScene();
             app.buildControlPanel();
             app.buildLegendPanel();
             app.buildTelemetryPanel();
@@ -71,12 +71,14 @@ classdef RobotFleetApp < handle
         function buildSpawnPanel(app)
             p = uipanel(app.MainGrid, 'Title', 'Robot Fleet', 'FontWeight', 'bold');
             p.Layout.Row = [2 3]; p.Layout.Column = 1;
-            gl = uigridlayout(p, [6 1], 'RowHeight', {25, 25, 25, 25, 25, '1x'}, ...
+            gl = uigridlayout(p, [7 1], 'RowHeight', {25, 25, 25, 25, 25, 25, '1x'}, ...
                 'Padding', [5 5 5 5], 'RowSpacing', 4);
 
             dd = uidropdown(gl, 'Items', {'DifferentialDrive', 'Quadcopter', 'Quadruped', 'Humanoid'});
             uibutton(gl, 'push', 'Text', '+ Spawn', ...
                 'ButtonPushedFcn', @(~,~) app.spawnRobot(dd.Value));
+            uibutton(gl, 'push', 'Text', '+ Spawn (Custom...)', ...
+                'ButtonPushedFcn', @(~,~) app.spawnRobotCustom(dd.Value));
             uibutton(gl, 'push', 'Text', '- Remove Selected', ...
                 'ButtonPushedFcn', @(~,~) app.removeRobot(app.SelectedIdx));
             uibutton(gl, 'push', 'Text', 'Load Script CSV...', ...
@@ -84,38 +86,34 @@ classdef RobotFleetApp < handle
             app.ScriptLabel = uilabel(gl, 'Text', '', 'FontSize', 11, ...
                 'FontColor', [0.3 0.3 0.3]);
             app.ScriptLabel.Visible = 'off';
-            uilabel(gl, 'Text', 'Click a viewport to select robot');
+            uilabel(gl, 'Text', 'Click legend to select robot');
         end
 
-        function buildViewportGrid(app)
-            vp = uipanel(app.MainGrid, 'Title', 'Viewports', 'FontWeight', 'bold');
-            vp.Layout.Row = [2 5]; vp.Layout.Column = 2;
-            app.ViewportGrid = uigridlayout(vp, [2 2], ...
-                'RowHeight', {'1x', '1x'}, 'ColumnWidth', {'1x', '1x'}, ...
-                'Padding', [4 4 4 4], 'RowSpacing', 6, 'ColumnSpacing', 6);
+        function buildScene(app)
+            app.ScenePanel = uipanel(app.MainGrid, 'Title', 'Scene', ...
+                'FontWeight', 'bold');
+            app.ScenePanel.Layout.Row = [2 5]; app.ScenePanel.Layout.Column = 2;
+            ig = uigridlayout(app.ScenePanel, [1 1], ...
+                'Padding', [0 0 0 0], 'RowSpacing', 0, 'ColumnSpacing', 0);
+            app.SceneAxes = uiaxes(ig);
+            app.SceneAxes.Layout.Row = 1; app.SceneAxes.Layout.Column = 1;
+            app.SceneAxes.Visible = 'on';
+            hold(app.SceneAxes, 'on');
+            axis(app.SceneAxes, 'equal');
+            grid(app.SceneAxes, 'on');
+            view(app.SceneAxes, 3);
+            app.SceneAxes.Projection = 'perspective';
+            xlabel(app.SceneAxes, 'X'); ylabel(app.SceneAxes, 'Y'); zlabel(app.SceneAxes, 'Z');
+            xlim(app.SceneAxes, [-2.5 2.5]);
+            ylim(app.SceneAxes, [-2.5 2.5]);
+            zlim(app.SceneAxes, [-0.5 2.5]);
+            light(app.SceneAxes, 'Position', [1 1 3], 'Style', 'infinite');
+            light(app.SceneAxes, 'Position', [-1 -1 1], 'Style', 'infinite');
 
-            app.AxesPanel = gobjects(4,1);
-            app.AxesHandle = gobjects(4,1);
-            app.Visualizer = cell(4,1);
             app.Robots = cell(4,1);
             app.BBoxHandles = cell(4,1);
             app.BBoxVisible = false(4,1);
             app.RobotVisible = false(4,1);
-
-            for i = 1:4
-                [r, c] = ind2sub([2 2], i);
-                p = uipanel(app.ViewportGrid, 'Title', '', ...
-                    'BorderType', 'line', 'BackgroundColor', [1 1 1]);
-                p.Layout.Row = r; p.Layout.Column = c;
-                ig = uigridlayout(p, [1 1], ...
-                    'Padding', [0 0 0 0], 'RowSpacing', 0, 'ColumnSpacing', 0);
-                ax = uiaxes(ig);
-                ax.Layout.Row = 1; ax.Layout.Column = 1;
-                ax.Visible = 'off';
-                ax.ButtonDownFcn = @(~,~) app.selectRobot(i);
-                app.AxesHandle(i) = ax;
-                app.AxesPanel(i) = p;
-            end
         end
 
         function buildLegendPanel(app)
@@ -141,9 +139,11 @@ classdef RobotFleetApp < handle
                 'ColumnWidth', {'1x', '1x', '1x'}, ...
                 'Padding', [6 6 6 6], 'RowSpacing', 4);
 
-            app.CtrlModeBtn = uibutton(gl, 'state', 'Text', 'Mode: Individual', ...
-                'Value', 0, 'ValueChangedFcn', @app.toggleMode);
-            app.CtrlModeBtn.Layout.Row = 1; app.CtrlModeBtn.Layout.Column = [1 3];
+            app.TargetDropdown = uidropdown(gl, ...
+                'Items', {'ALL', 'R1', 'R2', 'R3', 'R4'}, ...
+                'Value', 'ALL', ...
+                'Tooltip', 'Select which robot receives movement commands');
+            app.TargetDropdown.Layout.Row = 1; app.TargetDropdown.Layout.Column = [1 3];
 
             labels = {'↑', '↺', '↻', '←', 'STOP', '→', '↓', '⎋', '⏻'};
             cmds = {'FORWARD', 'YAW_LEFT', 'YAW_RIGHT', 'LEFT', 'STOP', ...
@@ -184,23 +184,40 @@ classdef RobotFleetApp < handle
         end
 
         function buildStatusBar(app)
-            app.StatusLabel = uilabel(app.MainGrid, 'Text', 'Ready', ...
-                'FontSize', 11, 'FontColor', [0.4 0.4 0.4]);
-            app.StatusLabel.Layout.Row = 7; app.StatusLabel.Layout.Column = 1;
-            app.FPSLabel = uilabel(app.MainGrid, 'Text', '', ...
-                'FontSize', 11, 'FontColor', [0.4 0.4 0.4]);
-            app.FPSLabel.Layout.Row = 7; app.FPSLabel.Layout.Column = 3;
-            app.PoolLabel = uilabel(app.MainGrid, 'Text', 'Pool: checking...', ...
+            sbGrid = uigridlayout(app.MainGrid, [1 3], ...
+                'RowHeight', {'1x'}, ...
+                'ColumnWidth', {'1x', 100, 180}, ...
+                'Padding', [0 0 0 0], 'RowSpacing', 0, 'ColumnSpacing', 4);
+            sbGrid.Layout.Row = 7; sbGrid.Layout.Column = [1 3];
+            app.StatusLabel = uilabel(sbGrid, 'Text', 'Ready', ...
+                'FontSize', 13, 'FontWeight', 'bold', 'FontColor', [0.2 0.2 0.2], ...
+                'VerticalAlignment', 'center');
+            app.StatusLabel.Layout.Row = 1; app.StatusLabel.Layout.Column = 1;
+            app.PoolLabel = uilabel(sbGrid, 'Text', '', ...
                 'FontSize', 11, 'FontColor', [0.4 0.4 0.4], ...
-                'HorizontalAlignment', 'center');
-            app.PoolLabel.Layout.Row = 7; app.PoolLabel.Layout.Column = 2;
+                'HorizontalAlignment', 'center', 'VerticalAlignment', 'center');
+            app.PoolLabel.Layout.Row = 1; app.PoolLabel.Layout.Column = 2;
+            app.FPSLabel = uilabel(sbGrid, 'Text', '', ...
+                'FontSize', 11, 'FontColor', [0.5 0.5 0.5], ...
+                'HorizontalAlignment', 'right', 'VerticalAlignment', 'center');
+            app.FPSLabel.Layout.Row = 1; app.FPSLabel.Layout.Column = 3;
         end
 
         function tryStartPool(app)
+            app.updateStatus('Starting pool...');
+            app.PoolLabel.Text = 'Pool: ...';
+            app.PoolTimer = timer('ExecutionMode', 'singleShot', 'StartDelay', 0.5, ...
+                'TimerFcn', @(~,~) app.doStartPool());
+            start(app.PoolTimer);
+        end
+
+        function doStartPool(app)
+            if ~isvalid(app); return; end
             try
                 if ~exist('gcp', 'file')
                     app.PoolAvailable = false;
-                    app.updateStatus('Parallel pool: not available');
+                    app.PoolLabel.Text = 'Pool: N/A';
+                    app.updateStatus('Ready');
                     return;
                 end
                 pool = gcp('nocreate');
@@ -211,20 +228,23 @@ classdef RobotFleetApp < handle
                 app.Pool = pool;
                 app.PoolAvailable = ~isempty(pool);
                 if app.PoolAvailable
-                    app.updateStatus(sprintf('Parallel pool: %d workers', pool.NumWorkers));
+                    app.PoolLabel.Text = sprintf('Pool: %dw', pool.NumWorkers);
+                    app.updateStatus('Ready');
                 else
-                    app.updateStatus('Parallel pool: failed');
+                    app.PoolLabel.Text = 'Pool: ERR';
+                    app.updateStatus('Ready');
                 end
             catch ME
                 app.PoolAvailable = false;
-                app.updateStatus('Parallel pool: ' + ME.message);
+                app.PoolLabel.Text = 'Pool: OFF';
+                app.updateStatus('Ready');
             end
         end
 
         function spawnRobot(app, type)
             n = find(cellfun(@isempty, app.Robots), 1);
             if isempty(n)
-                app.updateStatus('All viewports occupied');
+                app.updateStatus('All robot slots occupied');
                 return;
             end
             app.RobotCounter = app.RobotCounter + 1;
@@ -235,38 +255,135 @@ classdef RobotFleetApp < handle
                 case 'Quadruped';          r = robot.Quadruped(params);
                 case 'Humanoid';           r = robot.Humanoid(params);
             end
-            r.Id = sprintf('%s_%d', type, app.RobotCounter);
-            ax = app.AxesHandle(n);
-            vg = robot.Visualizer(ax);
-            vg.addRobot(r);
-            app.Visualizer{n} = vg;
+            r.Id = sprintf('R%d', app.RobotCounter);
+
+            spawnOffset = [(-0.45)*(n-1) + 0.675, 0, 0];
+            r.State(1:2) = r.State(1:2) + spawnOffset(1:2)';
+
+            if isempty(app.SceneVisualizer)
+                gx = [-5 5 5 -5]; gy = [-5 -5 5 5]; gz = [0 0 0 0];
+                patch(app.SceneAxes, gx, gy, gz, [0.85 0.85 0.85]);
+                app.SceneVisualizer = robot.Visualizer(app.SceneAxes);
+            end
+            app.SceneVisualizer.addRobot(r);
+            app.SceneVisualizer.update(r);
             app.Robots{n} = r;
             app.RobotVisible(n) = true;
-            ax.Visible = 'on';
-            ax.Position = [25 25 1 1];
-            ax.ButtonDownFcn = @(~,~) app.selectRobot(n);
-            cla(ax); hold(ax, 'on'); axis(ax, 'equal'); grid(ax, 'on'); view(ax, 3);
-            ax.Projection = 'perspective';
-            xlabel(ax, 'X'); ylabel(ax, 'Y'); zlabel(ax, 'Z');
-            xlim(ax, [-1.5 1.5]); ylim(ax, [-1.5 1.5]); zlim(ax, [-0.5 2.0]);
-
-            light(ax, 'Position', [1 1 3], 'Style', 'infinite');
-            light(ax, 'Position', [-1 -1 1], 'Style', 'infinite');
-
-            gx = [-5 5 5 -5]; gy = [-5 -5 5 5]; gz = [0 0 0 0];
-            patch(ax, gx, gy, gz, [0.85 0.85 0.85]);
+            app.updateTargetDropdown();
 
             app.BBoxHandles{n} = [];
             app.BBoxVisible(n) = false;
+            app.LegendCheckboxes(n).vis.Value = 1;
+            app.LegendCheckboxes(n).vis.Visible = 'on';
             app.LegendCheckboxes(n).vis.Enable = 'on';
+            app.toggleVisibility(n);
+            app.LegendCheckboxes(n).bbox.Visible = 'on';
             app.LegendCheckboxes(n).bbox.Enable = 'on';
+            app.LegendCheckboxes(n).label.Visible = 'on';
             app.LegendCheckboxes(n).label.Text = r.Id;
             c = app.ColorPalette{mod(n-1,4)+1};
             app.LegendCheckboxes(n).label.FontColor = c;
-            app.AxesPanel(n).Title = r.Id;
             app.selectRobot(n);
-            app.updateStatus(sprintf('Spawned %s at viewport %d', r.Id, n));
-            drawnow;
+            app.updateStatus(sprintf('SUCCESS: %s spawned at slot %d', r.Id, n));
+        end
+
+        function spawnRobotCustom(app, type)
+            n = find(cellfun(@isempty, app.Robots), 1);
+            if isempty(n)
+                app.updateStatus('All robot slots occupied');
+                return;
+            end
+            spawnOffset = [(-0.45)*(n-1) + 0.675, 0, 0];
+            params = app.defaultParams(type);
+            switch type
+                case 'DifferentialDrive'; defaultZ = 0;
+                case 'Quadcopter';         defaultZ = 0.5;
+                case 'Quadruped'
+                    defaultZ = params.geometric.bodyHeight/2 ...
+                             + params.kinematic.legLength1 ...
+                             + params.kinematic.legLength2;
+                case 'Humanoid'
+                    defaultZ = params.kinematic.thighLength ...
+                             + params.kinematic.shinLength;
+            end
+
+            dlg = uifigure('Name', 'Custom Spawn', ...
+                'Position', [600 400 380 300], 'Resize', 'off');
+            gl = uigridlayout(dlg, [9 2], ...
+                'RowHeight', repmat({28}, 1, 9), ...
+                'ColumnWidth', {110, '1x'}, ...
+                'Padding', [12 12 12 12], 'RowSpacing', 6);
+
+            fields = {'Name:', 'X:', 'Y:', 'Z:', 'Roll (deg):', 'Pitch (deg):', 'Yaw (deg):'};
+            defaults = {sprintf('R%d', app.RobotCounter+1), ...
+                sprintf('%.3f', spawnOffset(1)), ...
+                sprintf('%.3f', spawnOffset(2)), ...
+                sprintf('%.3f', defaultZ), ...
+                '0', '0', '0'};
+            edits = gobjects(7, 1);
+            for i = 1:7
+                uilabel(gl, 'Text', fields{i}, 'FontSize', 11, ...
+                    'FontWeight', 'bold', 'HorizontalAlignment', 'right');
+                edits(i) = uieditfield(gl, 'text', 'Value', defaults{i});
+            end
+
+            btnGl = uigridlayout(gl, [1 2], 'ColumnWidth', {'1x', '1x'}, 'Padding', [0 0 0 0]);
+            btnGl.Layout.Row = 9; btnGl.Layout.Column = [1 2];
+            okBtn = uibutton(btnGl, 'push', 'Text', 'Spawn', ...
+                'ButtonPushedFcn', @(~,~) spawnCb());
+            uibutton(btnGl, 'push', 'Text', 'Cancel', ...
+                'ButtonPushedFcn', @(~,~) delete(dlg));
+
+            function spawnCb()
+                name = strtrim(edits(1).Value);
+                vals = zeros(6,1);
+                for i = 1:6
+                    vals(i) = str2double(edits(i+1).Value);
+                end
+                if any(isnan(vals))
+                    app.updateStatus('Invalid number in custom spawn fields');
+                    return;
+                end
+                pos = vals(1:3);
+                rpy = deg2rad(vals(4:6));
+                app.RobotCounter = app.RobotCounter + 1;
+                switch type
+                    case 'DifferentialDrive'; r = robot.DifferentialDrive(params);
+                    case 'Quadcopter';         r = robot.Quadcopter(params);
+                    case 'Quadruped';          r = robot.Quadruped(params);
+                    case 'Humanoid';           r = robot.Humanoid(params);
+                end
+                r.Id = name;
+                r.State(1:3) = pos;
+                r.State(4:7) = robot.Utils.rpyToQuat(rpy(1), rpy(2), rpy(3));
+
+                if isempty(app.SceneVisualizer)
+                    gx = [-5 5 5 -5]; gy = [-5 -5 5 5]; gz = [0 0 0 0];
+                    patch(app.SceneAxes, gx, gy, gz, [0.85 0.85 0.85]);
+                    app.SceneVisualizer = robot.Visualizer(app.SceneAxes);
+                end
+                app.SceneVisualizer.addRobot(r);
+                app.SceneVisualizer.update(r);
+                app.Robots{n} = r;
+                app.RobotVisible(n) = true;
+                app.updateTargetDropdown();
+
+                app.BBoxHandles{n} = [];
+                app.BBoxVisible(n) = false;
+                app.LegendCheckboxes(n).vis.Value = 1;
+                app.LegendCheckboxes(n).vis.Visible = 'on';
+                app.LegendCheckboxes(n).vis.Enable = 'on';
+                app.toggleVisibility(n);
+                app.LegendCheckboxes(n).bbox.Visible = 'on';
+                app.LegendCheckboxes(n).bbox.Enable = 'on';
+                app.LegendCheckboxes(n).label.Visible = 'on';
+                app.LegendCheckboxes(n).label.Text = r.Id;
+                c = app.ColorPalette{mod(n-1,4)+1};
+                app.LegendCheckboxes(n).label.FontColor = c;
+                app.selectRobot(n);
+                app.updateStatus(sprintf('SUCCESS: %s spawned at slot %d', r.Id, n));
+                delete(dlg);
+            end
         end
 
         function removeRobot(app, idx)
@@ -279,35 +396,51 @@ classdef RobotFleetApp < handle
                 delete(r.GraphicsTransform);
             end
             app.Robots{idx} = [];
-            app.Visualizer{idx} = [];
             app.BBoxHandles{idx} = [];
             app.RobotVisible(idx) = false;
             app.BBoxVisible(idx) = false;
-            app.AxesHandle(idx).Visible = 'off';
-            app.AxesPanel(idx).Title = '';
-            app.LegendCheckboxes(idx).vis.Enable = 'off';
             app.LegendCheckboxes(idx).vis.Value = 0;
-            app.LegendCheckboxes(idx).bbox.Enable = 'off';
+            app.LegendCheckboxes(idx).vis.Visible = 'off';
+            app.LegendCheckboxes(idx).vis.Enable = 'off';
             app.LegendCheckboxes(idx).bbox.Value = 0;
+            app.LegendCheckboxes(idx).bbox.Visible = 'off';
+            app.LegendCheckboxes(idx).bbox.Enable = 'off';
+            app.LegendCheckboxes(idx).label.Visible = 'off';
             app.LegendCheckboxes(idx).label.Text = '─';
             app.LegendCheckboxes(idx).label.FontColor = [0.5 0.5 0.5];
             if app.SelectedIdx == idx
                 app.SelectedIdx = 0;
             end
+            app.updateTargetDropdown();
             app.updateStatus(sprintf('Removed %s', r.Id));
+        end
+
+        function updateTargetDropdown(app)
+            items = {'ALL'};
+            for i = 1:numel(app.Robots)
+                if ~isempty(app.Robots{i})
+                    items{end+1} = sprintf('R%d', i);
+                end
+            end
+            app.TargetDropdown.Items = items;
+            if ~ismember(app.TargetDropdown.Value, items)
+                app.TargetDropdown.Value = 'ALL';
+            end
         end
 
         function selectRobot(app, idx)
             if idx < 1 || idx > numel(app.Robots) || isempty(app.Robots{idx})
                 return;
             end
-            if app.SelectedIdx > 0 && app.SelectedIdx <= numel(app.AxesPanel)
-                app.AxesPanel(app.SelectedIdx).BorderType = 'line';
-                app.AxesPanel(app.SelectedIdx).HighlightColor = [0.5 0.5 0.5];
+            for i = 1:numel(app.Robots)
+                if isfield(app.LegendCheckboxes, 'label') && isvalid(app.LegendCheckboxes(i).label)
+                    app.LegendCheckboxes(i).label.FontWeight = 'normal';
+                end
             end
             app.SelectedIdx = idx;
-            app.AxesPanel(idx).BorderType = 'line';
-            app.AxesPanel(idx).HighlightColor = [0 0.45 0.74];
+            if isfield(app.LegendCheckboxes, 'label') && isvalid(app.LegendCheckboxes(idx).label)
+                app.LegendCheckboxes(idx).label.FontWeight = 'bold';
+            end
             app.updateTelemetry();
         end
 
@@ -329,47 +462,54 @@ classdef RobotFleetApp < handle
 
         function simStep(app)
             if ~app.Running; return; end
-            tStart = tic;
-            nSteps = ceil(app.RenderDt / app.PhysicsDt);
-            active = find(~cellfun(@isempty, app.Robots));
-            if app.ScriptMode && ~isempty(active)
-                app.playbackStep(nSteps);
-            end
-            for k = 1:nSteps
+            drawnow('limitrate');
+            if app.Busy; return; end
+            app.Busy = true;
+            try
+                tStart = tic;
+                active = find(~cellfun(@isempty, app.Robots));
+                baseSteps = ceil(app.RenderDt / app.PhysicsDt);
+                nSteps = max(1, round(baseSteps / max(1, 0.25 * numel(active) + 0.75)));
+                if app.ScriptMode && ~isempty(active)
+                    app.playbackStep(nSteps);
+                end
+                for k = 1:nSteps
+                    for i = active(:)'
+                        r = app.Robots{i};
+                        if ~app.ScriptMode
+                            dir = app.DesiredDirection;
+                            amt = app.DesiredAmount;
+                            target = app.TargetDropdown.Value;
+                            if strcmp(target, 'ALL') || ...
+                               strcmp(target, sprintf('R%d', i))
+                                r.move(dir, amt);
+                            end
+                        end
+                        r.step(app.SimTime, app.PhysicsDt);
+                    end
+                    app.SimTime = app.SimTime + app.PhysicsDt;
+                end
                 for i = active(:)'
-                    r = app.Robots{i};
-                    if ~app.ScriptMode
-                        dir = app.DesiredDirection;
-                        amt = app.DesiredAmount;
-                        if app.SyncMode || i == app.SelectedIdx
-                            r.move(dir, amt);
+                    if app.RobotVisible(i) && ~isempty(app.SceneVisualizer)
+                        r = app.Robots{i};
+                        if isprop(r, 'GraphicsTransform') && isvalid(r.GraphicsTransform)
+                            app.SceneVisualizer.update(r);
                         end
                     end
-                    r.step(app.SimTime, app.PhysicsDt);
-                end
-                app.SimTime = app.SimTime + app.PhysicsDt;
-            end
-            for i = active(:)'
-                if app.RobotVisible(i) && ~isempty(app.Visualizer{i})
-                    r = app.Robots{i};
-                    if isprop(r, 'GraphicsTransform') && isvalid(r.GraphicsTransform)
-                        app.Visualizer{i}.update(r);
+                    if app.BBoxVisible(i) && app.RobotVisible(i)
+                        app.drawBoundingBox(i);
+                    elseif app.BBoxVisible(i)
+                        app.hideBoundingBox(i);
                     end
-                    app.updateRobotGraphics(i);
                 end
-                if app.BBoxVisible(i) && app.RobotVisible(i)
-                    app.drawBoundingBox(i);
-                elseif app.BBoxVisible(i)
-                    app.hideBoundingBox(i);
-                end
+                app.updateTelemetry();
+                elapsed = toc(tStart);
+                fps = 1 / max(elapsed, 0.001);
+                app.FPSLabel.Text = sprintf('%.0f FPS  |  Sim %.1fs', fps, app.SimTime);
+            catch ME
+                app.updateStatus(sprintf('simStep error: %s', ME.message));
             end
-            app.updateTelemetry();
-            elapsed = toc(tStart);
-            fps = 1 / max(elapsed, 0.001);
-            app.FPSLabel.Text = sprintf('FPS: %.0f | Sim: %.1fs', fps, app.SimTime);
-        end
-
-        function updateRobotGraphics(~, ~)
+            app.Busy = false;
         end
 
         function drawBoundingBox(app, idx)
@@ -377,28 +517,36 @@ classdef RobotFleetApp < handle
                 return;
             end
             r = app.Robots{idx};
-            ax = app.AxesHandle(idx);
-            if ~isvalid(ax); return; end
+            if ~isvalid(app.SceneAxes); return; end
+            % Update verts from current robot state
             [obbVerts, obbEdges] = robot.Collision.buildOBB(r);
-            if ~isempty(app.BBoxHandles{idx}) && isvalid(app.BBoxHandles{idx})
-                delete(app.BBoxHandles{idx});
+            hVec = app.BBoxHandles{idx};
+            if isempty(hVec) || ~all(isvalid(hVec))
+                % First time — create line handles
+                hold(app.SceneAxes, 'on');
+                c = app.ColorPalette{mod(idx-1,4)+1} * 1.5;
+                c = min(c, 1);
+                hVec = gobjects(size(obbEdges,1), 1);
+                for e = 1:size(obbEdges,1)
+                    hVec(e) = plot3(app.SceneAxes, obbVerts(obbEdges(e,:),1), ...
+                        obbVerts(obbEdges(e,:),2), ...
+                        obbVerts(obbEdges(e,:),3), ...
+                        'Color', c, 'LineWidth', 1.5, 'LineStyle', '--');
+                end
+                app.BBoxHandles{idx} = hVec;
+            else
+                % Update existing handles with new vertex positions
+                for e = 1:size(obbEdges,1)
+                    set(hVec(e), 'XData', obbVerts(obbEdges(e,:),1), ...
+                                 'YData', obbVerts(obbEdges(e,:),2), ...
+                                 'ZData', obbVerts(obbEdges(e,:),3));
+                end
             end
-            hold(ax, 'on');
-            c = app.ColorPalette{mod(idx-1,4)+1} * 1.5;
-            c = min(c, 1);
-            h = gobjects(size(obbEdges,1), 1);
-            for e = 1:size(obbEdges,1)
-                h(e) = plot3(ax, obbVerts(obbEdges(e,:),1), ...
-                    obbVerts(obbEdges(e,:),2), ...
-                    obbVerts(obbEdges(e,:),3), ...
-                    'Color', c, 'LineWidth', 1.5, 'LineStyle', '--');
-            end
-            app.BBoxHandles{idx} = h;
         end
 
         function hideBoundingBox(app, idx)
             if ~isempty(app.BBoxHandles{idx})
-                if isvalid(app.BBoxHandles{idx})
+                if all(isvalid(app.BBoxHandles{idx}))
                     delete(app.BBoxHandles{idx});
                 end
                 app.BBoxHandles{idx} = [];
@@ -466,33 +614,31 @@ classdef RobotFleetApp < handle
             pitch = asin(2*(w*y - z*x));
         end
 
-        function toggleMode(app, ~, ~)
-            app.SyncMode = app.CtrlModeBtn.Value;
-            if app.SyncMode
-                app.CtrlModeBtn.Text = 'Mode: Sync';
-                app.updateStatus('Synchronize mode: all robots move together');
-            else
-                app.CtrlModeBtn.Text = 'Mode: Individual';
-                app.updateStatus('Individual mode: selected robot only');
-            end
-        end
-
         function sendCommand(app, cmdStr)
             dir = robot.Direction.(cmdStr);
             amt = 1.0;
-            if any(strcmp(cmdStr, {'STOP', 'YAW_LEFT', 'YAW_RIGHT'}))
+            if any(strcmp(cmdStr, {'YAW_LEFT', 'YAW_RIGHT'}))
                 amt = 0.5;
+            elseif strcmp(cmdStr, 'STOP')
+                amt = 0;
             end
-            if app.SyncMode
-                app.DesiredDirection = dir;
-                app.DesiredAmount = amt;
+            app.DesiredDirection = dir;
+            app.DesiredAmount = amt;
+            target = app.TargetDropdown.Value;
+            if strcmp(target, 'ALL')
                 for i = find(~cellfun(@isempty, app.Robots))'
                     app.Robots{i}.move(dir, amt);
                 end
-            elseif app.SelectedIdx > 0
-                app.DesiredDirection = dir;
-                app.DesiredAmount = amt;
-                app.Robots{app.SelectedIdx}.move(dir, amt);
+                app.updateStatus(sprintf('Command %s → ALL robots', cmdStr));
+            else
+                idx = sscanf(target, 'R%d');
+                if idx >= 1 && idx <= numel(app.Robots) && ~isempty(app.Robots{idx})
+                    app.Robots{idx}.move(dir, amt);
+                    app.selectRobot(idx);
+                    app.updateStatus(sprintf('Command %s → %s', cmdStr, target));
+                else
+                    app.updateStatus(sprintf('Cannot send to %s: no robot', target));
+                end
             end
         end
 
@@ -609,17 +755,21 @@ classdef RobotFleetApp < handle
 
         function onClose(app, ~, ~)
             app.stopSimulation();
+            if ~isempty(app.PoolTimer) && isvalid(app.PoolTimer)
+                stop(app.PoolTimer);
+                delete(app.PoolTimer);
+            end
             delete(app.Figure);
         end
 
         function addLegendCheckbox(app, idx)
-            visCb = uicheckbox(app.LegendGrid, 'Value', 0, ...
+            visCb = uicheckbox(app.LegendGrid, 'Value', 0, 'Visible', 'off', ...
                 'ValueChangedFcn', @(~,~) app.toggleVisibility(idx));
             visCb.Layout.Row = 1+idx; visCb.Layout.Column = 1;
-            bboxCb = uicheckbox(app.LegendGrid, 'Value', 0, ...
+            bboxCb = uicheckbox(app.LegendGrid, 'Value', 0, 'Visible', 'off', ...
                 'ValueChangedFcn', @(~,~) app.toggleBoundingBox(idx));
             bboxCb.Layout.Row = 1+idx; bboxCb.Layout.Column = 2;
-            lbl = uilabel(app.LegendGrid, 'Text', '─', ...
+            lbl = uilabel(app.LegendGrid, 'Text', '─', 'Visible', 'off', ...
                 'FontSize', 10, 'FontColor', [0.5 0.5 0.5]);
             lbl.Layout.Row = 1+idx; lbl.Layout.Column = 3;
             app.LegendCheckboxes(idx).vis = visCb;

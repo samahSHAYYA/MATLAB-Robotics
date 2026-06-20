@@ -286,7 +286,7 @@ classdef Quadruped < robot.GroundRobot
             obj.buildGeometry(hg);
 
             obj.LegGraphics = cell(1, 4);
-            [sx, sy, sz] = sphere(12);
+            [sx, sy, sz] = sphere(8);
 
             for i = 1:4
                 shoulder = obj.getShoulderPos(i);
@@ -457,7 +457,7 @@ classdef Quadruped < robot.GroundRobot
                 return;
             end
 
-            [sx, sy, sz] = sphere(12);
+            [sx, sy, sz] = sphere(8);
 
             for i = 1:4
                 shoulder = obj.getShoulderPos(i);

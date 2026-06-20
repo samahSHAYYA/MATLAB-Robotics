@@ -68,6 +68,21 @@ classdef (Sealed) Utils
             yaw = atan2(R(2,1), R(1,1));
         end
 
+        function q = rpyToQuat(roll, pitch, yaw)
+            %RPYTOQUAT  Roll-pitch-yaw (rad) to quaternion [w,x,y,z]'.
+            %   q = robot.Utils.rpyToQuat(roll, pitch, yaw)
+            %   Uses ZYX convention: yaw (z) → pitch (y) → roll (x).
+            %   Inputs:  roll, pitch, yaw - angles in radians
+            %   Outputs: q - [w,x,y,z]' unit quaternion
+            cr = cos(roll/2); sr = sin(roll/2);
+            cp = cos(pitch/2); sp = sin(pitch/2);
+            cy = cos(yaw/2); sy = sin(yaw/2);
+            q = [cr*cp*cy + sr*sp*sy;
+                 sr*cp*cy - cr*sp*sy;
+                 cr*sp*cy + sr*cp*sy;
+                 cr*cp*sy - sr*sp*cy];
+        end
+
         function S = skew(v)
             %SKEW  Skew-symmetric cross-product matrix of 3-vector.
             %   S = robot.Utils.skew(v)  satisfies  S * a = cross(v, a).
