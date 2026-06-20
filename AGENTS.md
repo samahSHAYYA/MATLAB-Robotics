@@ -30,7 +30,7 @@ startRobot('Humanoid')             % bipedal walking
 
 ## Build phases
 
-See `.agent/tasks.json` for live status. Current phase: 15 (visual refinements + controller innovations — completed). Next phase TBD by user.
+See `.agent/tasks.json` for live status. Current phase: 16 (waypoint navigation — completed). Next phase TBD by user.
 
 ## Key rules
 

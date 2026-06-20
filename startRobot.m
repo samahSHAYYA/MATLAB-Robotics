@@ -19,6 +19,8 @@ function startRobot(robotType)
     %     h            Toggle HUD overlay
     %     c            Cycle camera mode
     %     l            Toggle running lights
+    %     p            Cycle path mode (manual → record → replay)
+    %     n            Cycle waypoint mode (off → place → navigate)
     %     esc          Exit
     arguments
         robotType string = 'DifferentialDrive'
@@ -94,6 +96,6 @@ function startRobot(robotType)
     title(ax, char(robotType));
 
     fprintf('matlab-robotics demo: %s\n', robotType);
-    fprintf('Controls: arrows=move, space=stop, r=reset, g=toggle gait (legged robots), esc=exit\n');
+    fprintf('Controls: arrows=move, space=stop, r=reset, g=gait, h=HUD, c=camera, l=lights, p=path, n=waypoints, esc=exit\n');
     ctrl.run();
 end

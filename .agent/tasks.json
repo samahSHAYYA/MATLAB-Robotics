@@ -143,6 +143,15 @@
       "files": ["+robot/Robot.m", "+robot/Visualizer.m", "+robot/Controller.m", "+robot/DifferentialDrive.m", "+robot/Quadcopter.m", "+robot/Quadruped.m", "+robot/Humanoid.m", "startRobot.m", "docs/adr/0015-visual-refinements-and-controller-innovations.md", "tests/runAll.m"],
       "verified_by": "QA",
       "blocker_reason": null
+    },
+    {
+      "id": "16",
+      "name": "Waypoint navigation",
+      "description": "Click-to-place waypoints in 3D scene, autonomous navigation through waypoints with yaw alignment, visual markers with progress tracking.",
+      "status": "completed",
+      "files": ["+robot/Controller.m", "+robot/Visualizer.m", "startRobot.m", "tests/+robot/ControllerTest.m", "docs/adr/0016-waypoint-navigation.md"],
+      "verified_by": "QA",
+      "blocker_reason": null
     }
   ]
 }

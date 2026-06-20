@@ -8,6 +8,8 @@ classdef Visualizer < handle
         Robots                 cell
         GroundHandle    (1,1) matlab.graphics.primitive.Patch
         CameraMode      (1,1) string = "free"
+        WaypointMarkers      cell  = {}
+        WaypointLineHandle
     end
 
     methods
@@ -39,6 +41,8 @@ classdef Visualizer < handle
             gy = [-5, 5, 5, -5];
             gz = [0, 0, 0, 0];
             obj.GroundHandle = patch(ax, gx, gy, gz, [0.85, 0.85, 0.85]);
+            obj.WaypointLineHandle = line(ax, NaN, NaN, NaN, ...
+                'Color', [1 0.5 0], 'LineWidth', 1.5, 'LineStyle', '--');
         end
 
         function addRobot(obj, rbt)
@@ -69,6 +73,61 @@ classdef Visualizer < handle
             %CLEAR  Remove all robot graphics and clear the robot list.
             delete(obj.TransformGroup.Children);
             obj.Robots = {};
+        end
+
+        function addWaypointMarker(obj, pos, idx)
+            %ADDWAYPOINTMARKER  Place a 3D marker at the given position.
+            ax = obj.AxesHandle;
+            hold(ax, 'on');
+            m = scatter3(ax, pos(1), pos(2), pos(3), 60, ...
+                [1 0.6 0], 'filled', 'MarkerEdgeColor', 'k', ...
+                'LineWidth', 1.0);
+            t = text(ax, pos(1), pos(2), pos(3)+0.05, num2str(idx), ...
+                'FontSize', 9, 'FontWeight', 'bold', ...
+                'Color', [1 0.6 0], 'HorizontalAlignment', 'center');
+            obj.WaypointMarkers{end+1} = {m, t};
+            obj.refreshWaypointLine();
+        end
+
+        function clearWaypoints(obj)
+            for i = 1:length(obj.WaypointMarkers)
+                pair = obj.WaypointMarkers{i};
+                if ishandle(pair{1}); delete(pair{1}); end
+                if ishandle(pair{2}); delete(pair{2}); end
+            end
+            obj.WaypointMarkers = {};
+            set(obj.WaypointLineHandle, 'XData', NaN, 'YData', NaN, 'ZData', NaN);
+        end
+
+        function highlightWaypoint(obj, idx)
+            for i = 1:length(obj.WaypointMarkers)
+                pair = obj.WaypointMarkers{i};
+                if ~ishandle(pair{1}); continue; end
+                if i < idx
+                    set(pair{1}, 'MarkerFaceColor', [0.3 0.8 0.3]);
+                    set(pair{2}, 'Color', [0.3 0.8 0.3]);
+                elseif i == idx
+                    set(pair{1}, 'MarkerFaceColor', [1 0 0], 'SizeData', 100);
+                    set(pair{2}, 'Color', [1 0 0], 'FontSize', 11);
+                else
+                    set(pair{1}, 'MarkerFaceColor', [1 0.6 0], 'SizeData', 60);
+                    set(pair{2}, 'Color', [1 0.6 0], 'FontSize', 9);
+                end
+            end
+        end
+
+        function refreshWaypointLine(obj)
+            n = length(obj.WaypointMarkers);
+            if n < 2
+                set(obj.WaypointLineHandle, 'XData', NaN, 'YData', NaN, 'ZData', NaN);
+                return;
+            end
+            x = zeros(n, 1); y = zeros(n, 1); z = zeros(n, 1);
+            for i = 1:n
+                p = obj.WaypointMarkers{i}{1};
+                x(i) = p.XData; y(i) = p.YData; z(i) = p.ZData;
+            end
+            set(obj.WaypointLineHandle, 'XData', x, 'YData', y, 'ZData', z);
         end
     end
 end

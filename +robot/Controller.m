@@ -16,6 +16,8 @@ classdef Controller < handle
     %     c         → cycle camera mode (free → chase → orbit → top)
     %     l         → toggle running lights
     %     p         → cycle path mode (manual → record → replay → manual)
+    %     n         → cycle waypoint mode (off → place → navigate → off)
+    %     click     → place waypoint at mouse location (in place mode)
     %     escape    → close
 
     properties
@@ -40,6 +42,13 @@ classdef Controller < handle
         RecordedPath     (:,4) double = zeros(0,4)
         ReplayIdx        (1,1) double = 1
         ReplayTime       (1,1) double = 0
+        WaypointRadius   (1,1) double = 0.15
+    end
+
+    properties
+        WaypointMode     (1,1) string = "off"
+        Waypoints        (:,3) double = zeros(0,3)
+        WaypointTargetIdx (1,1) double = 1
     end
 
     methods
@@ -63,6 +72,7 @@ classdef Controller < handle
             obj.HudActive = false;
             obj.CameraModeIdx = 1;
             obj.Visualizer.CameraMode = "free";
+            obj.Visualizer.AxesHandle.ButtonDownFcn = @obj.onAxesClick;
         end
 
         function run(obj)
@@ -108,6 +118,9 @@ classdef Controller < handle
                         end
                     case "replay"
                         obj.runReplayStep();
+                end
+                if strcmp(obj.WaypointMode, "navigate")
+                    obj.navigateToWaypoint();
                 end
                 if obj.HudActive
                     obj.updateHud();
@@ -189,7 +202,12 @@ classdef Controller < handle
             if ishandle(obj.HudHandles.Mode)
                 cam = char(obj.Visualizer.CameraMode);
                 pm = char(obj.PathMode);
-                set(obj.HudHandles.Mode, 'String', ['Mode: ' cam '  Path: ' pm gaitStr]);
+                wm = char(obj.WaypointMode);
+                wpStr = '';
+                if ~strcmp(obj.WaypointMode, "off")
+                    wpStr = sprintf('  WP: %s[%d/%d]', wm, obj.WaypointTargetIdx, size(obj.Waypoints,1));
+                end
+                set(obj.HudHandles.Mode, 'String', ['Mode: ' cam '  Path: ' pm gaitStr wpStr]);
             end
         end
 
@@ -230,6 +248,60 @@ classdef Controller < handle
             p1 = obj.RecordedPath(obj.ReplayIdx+1, 2:4);
             pos = p0 + frac * (p1 - p0);
             obj.Robot.setState([pos(1); pos(2); pos(3); 1; 0; 0; 0; 0; 0; 0; 0; 0; 0]);
+        end
+
+        function navigateToWaypoint(obj)
+            if size(obj.Waypoints, 1) == 0
+                obj.WaypointMode = "off";
+                fprintf('No waypoints to navigate.\n');
+                return;
+            end
+            if obj.WaypointTargetIdx > size(obj.Waypoints, 1)
+                obj.WaypointMode = "off";
+                obj.Visualizer.clearWaypoints();
+                obj.Waypoints = zeros(0,3);
+                obj.WaypointTargetIdx = 1;
+                fprintf('Navigation complete.\n');
+                return;
+            end
+            pos = obj.Robot.State(1:3);
+            target = obj.Waypoints(obj.WaypointTargetIdx, :);
+            delta = target - pos';
+            dist = norm(delta);
+            if dist < obj.WaypointRadius
+                obj.WaypointTargetIdx = obj.WaypointTargetIdx + 1;
+                obj.Visualizer.highlightWaypoint(obj.WaypointTargetIdx);
+                if obj.WaypointTargetIdx > size(obj.Waypoints, 1)
+                    obj.DesiredDirection = robot.Direction.STOP;
+                    obj.DesiredAmount = 0;
+                end
+                return;
+            end
+            yaw = atan2(delta(2), delta(1));
+            R = robot.Utils.quatToRotmx(obj.Robot.State(4:7));
+            currentYaw = atan2(R(2,1), R(1,1));
+            yawErr = mod(yaw - currentYaw + pi, 2*pi) - pi;
+            isAerial = isa(obj.Robot, 'robot.Quadcopter');
+            if abs(yawErr) > 0.2
+                if yawErr > 0
+                    obj.DesiredDirection = robot.Direction.YAW_LEFT;
+                    obj.DesiredAmount = min(1.0, abs(yawErr) / pi);
+                else
+                    obj.DesiredDirection = robot.Direction.YAW_RIGHT;
+                    obj.DesiredAmount = min(1.0, abs(yawErr) / pi);
+                end
+            else
+                obj.DesiredDirection = robot.Direction.FORWARD;
+                obj.DesiredAmount = min(1.0, dist / 0.5);
+                if isAerial && delta(3) > 0.1
+                    obj.DesiredDirection = robot.Direction.UP;
+                    obj.DesiredAmount = min(1.0, delta(3) / 0.5);
+                elseif isAerial && delta(3) < -0.1
+                    obj.DesiredDirection = robot.Direction.DOWN;
+                    obj.DesiredAmount = min(1.0, abs(delta(3)) / 0.5);
+                end
+            end
+            obj.Robot.move(obj.DesiredDirection, obj.DesiredAmount);
         end
 
         function updateCamera(obj, ~)
@@ -330,6 +402,27 @@ classdef Controller < handle
                         case "replay"; obj.PathMode = "manual"; obj.RecordedPath = zeros(0,4);
                     end
                     fprintf('Path mode: %s\n', obj.PathMode);
+                case 'n'
+                    switch obj.WaypointMode
+                        case "off"
+                            obj.WaypointMode = "place";
+                            fprintf('Waypoint mode: place — click on scene to place waypoints.\n');
+                        case "place"
+                            if size(obj.Waypoints, 1) < 2
+                                fprintf('Place at least 2 waypoints first.\n');
+                                return;
+                            end
+                            obj.WaypointMode = "navigate";
+                            obj.WaypointTargetIdx = 1;
+                            obj.Visualizer.highlightWaypoint(1);
+                            fprintf('Waypoint mode: navigate — robot moving through waypoints.\n');
+                        case "navigate"
+                            obj.WaypointMode = "off";
+                            obj.Visualizer.clearWaypoints();
+                            obj.Waypoints = zeros(0,3);
+                            obj.WaypointTargetIdx = 1;
+                            fprintf('Waypoint mode: off. Waypoints cleared.\n');
+                    end
                 case 'escape'
                     obj.onClose();
             end
@@ -347,6 +440,20 @@ classdef Controller < handle
             %ONCLOSE  Stop the loop and delete the figure.
             obj.Running = false;
             delete(obj.Figure);
+        end
+
+        function onAxesClick(obj, src, ~)
+            if ~strcmp(obj.WaypointMode, "place"); return; end
+            cp = get(src, 'CurrentPoint');
+            pos = cp(1, 1:3);
+            % Snap ground robots to z=0
+            if isa(obj.Robot, 'robot.DifferentialDrive')
+                pos(3) = 0;
+            end
+            idx = size(obj.Waypoints, 1) + 1;
+            obj.Waypoints(idx, :) = pos;
+            obj.Visualizer.addWaypointMarker(pos, idx);
+            fprintf('Waypoint %d placed at (%.2f, %.2f, %.2f)\n', idx, pos(1), pos(2), pos(3));
         end
     end
 end
