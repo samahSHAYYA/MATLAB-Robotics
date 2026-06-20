@@ -100,12 +100,8 @@ classdef Robot < handle
     end
 
     methods
-        function updateVisuals(obj, ax)
+        function updateVisuals(obj, ~)
             %UPDATEVISUALS  Refresh trail line, shadow, and running lights.
-            arguments
-                obj
-                ax (1,1) matlab.graphics.axis.Axes
-            end
             if ~isempty(obj.TrailHandle) && ishandle(obj.TrailHandle)
                 buf = obj.TrailBuffer;
                 if size(buf, 1) >= 2

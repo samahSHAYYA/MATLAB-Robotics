@@ -232,7 +232,7 @@ classdef Controller < handle
             obj.Robot.setState([pos(1); pos(2); pos(3); 1; 0; 0; 0; 0; 0; 0; 0; 0; 0]);
         end
 
-        function updateCamera(obj, t)
+        function updateCamera(obj, ~)
             ax = obj.Visualizer.AxesHandle;
             pos = obj.Robot.State(1:3);
             R = robot.Utils.quatToRotmx(obj.Robot.State(4:7));
@@ -324,7 +324,6 @@ classdef Controller < handle
                         camproj(obj.Visualizer.AxesHandle, 'perspective');
                     end
                 case 'p'
-                    modes = ["manual", "record", "replay"];
                     switch obj.PathMode
                         case "manual"; obj.PathMode = "record";
                         case "record"; obj.PathMode = "replay"; obj.startReplay();

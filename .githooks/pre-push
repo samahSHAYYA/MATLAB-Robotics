@@ -32,14 +32,19 @@ done
 
 # 2. Optionally run MATLAB lint + tests if MATLAB is available
 if command -v matlab >/dev/null 2>&1; then
-    echo "MATLAB found — running lint..."
-    matlab -batch "addpath('.agent/skills/lint/scripts'); lintCode();"
-    if [ $? -ne 0 ]; then
-        echo "ERROR: Lint failed — fix before pushing"
-        exit 1
+    LINT_SCRIPT=".agent/skills/lint/scripts/lintCode.m"
+    if [ -f "$LINT_SCRIPT" ]; then
+        echo "MATLAB found — running lint..."
+        matlab -batch "addpath('.agent/skills/lint/scripts'); lintCode();"
+        if [ $? -ne 0 ]; then
+            echo "ERROR: Lint failed — fix before pushing"
+            exit 1
+        fi
+    else
+        echo "Lint script not found at $LINT_SCRIPT — skipping lint"
     fi
     echo "Running tests..."
-    matlab -batch "addpath('tests'); import matlab.unittest.TestSuite; results = run(TestSuite.fromPackage('robot', 'IncludingSubpackages', true)); results = [results, run(TestSuite.fromClass(?RobotFleetAppTest))]; assertSuccess(results);"
+    matlab -batch "cd('$PWD'); addpath('tests'); import matlab.unittest.TestSuite; results = run(TestSuite.fromFolder('tests/+robot', 'IncludingSubfolders', true)); results = [results; run(TestSuite.fromFile('tests/RobotFleetAppTest.m'))]; assertSuccess(results);"
     if [ $? -ne 0 ]; then
         echo "ERROR: Tests failed — fix before pushing"
         exit 1
