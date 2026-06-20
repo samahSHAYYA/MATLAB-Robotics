@@ -44,7 +44,7 @@ if command -v matlab >/dev/null 2>&1; then
         echo "Lint script not found at $LINT_SCRIPT — skipping lint"
     fi
     echo "Running tests..."
-    matlab -batch "addpath('tests'); import matlab.unittest.TestSuite; results = run(TestSuite.fromFolder('tests/+robot', 'IncludingSubfolders', true)); if isfile('tests/RobotFleetAppTest.m'); results = [results(:); run(TestSuite.fromFile('tests/RobotFleetAppTest.m'))]; end; assertSuccess(results);"
+    matlab -batch "ROOT=pwd; addpath(ROOT); addpath(fullfile(ROOT,'tests')); import matlab.unittest.TestSuite; results = run(TestSuite.fromFolder(fullfile(ROOT,'tests','+robot'), 'IncludingSubfolders', true)); fleetFile = fullfile(ROOT,'tests','RobotFleetAppTest.m'); if isfile(fleetFile); results = [results(:); run(TestSuite.fromFile(fleetFile))]; end; assertSuccess(results);"
     if [ $? -ne 0 ]; then
         echo "ERROR: Tests failed — fix before pushing"
         exit 1
