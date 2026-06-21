@@ -25,7 +25,6 @@ classdef RobotFleetApp < handle
         SimTime             (1,1) double = 0
         DesiredDirection    robot.Direction = robot.Direction.STOP
         DesiredAmount       (1,1) double = 0
-        Busy                (1,1) logical = false
         Pool
         PoolTimer
         PoolAvailable       (1,1) logical = false
@@ -446,7 +445,7 @@ classdef RobotFleetApp < handle
 
         function startSimulation(app)
             app.Running = true;
-            app.SimTimer = timer('ExecutionMode', 'fixedRate', ...
+            app.SimTimer = timer('ExecutionMode', 'fixedSpacing', ...
                 'Period', app.RenderDt, ...
                 'TimerFcn', @(~,~) app.simStep());
             start(app.SimTimer);
@@ -463,8 +462,6 @@ classdef RobotFleetApp < handle
         function simStep(app)
             if ~app.Running; return; end
             drawnow('limitrate');
-            if app.Busy; return; end
-            app.Busy = true;
             try
                 tStart = tic;
                 active = find(~cellfun(@isempty, app.Robots));
@@ -509,7 +506,6 @@ classdef RobotFleetApp < handle
             catch ME
                 app.updateStatus(sprintf('simStep error: %s', ME.message));
             end
-            app.Busy = false;
         end
 
         function drawBoundingBox(app, idx)

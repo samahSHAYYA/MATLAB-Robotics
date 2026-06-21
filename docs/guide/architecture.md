@@ -109,7 +109,7 @@ Commands flow through a `TargetDropdown` (ALL / R1–R4). In `simStep`:
 
 ### Timer-based simulation
 
-Uses `timer('ExecutionMode', 'fixedRate')` at `RenderDt` (≈33 ms). A `Busy` guard prevents re-entrant callbacks. `drawnow('limitrate')` at the start of each tick ensures UI callbacks (keyboard, checkboxes) are processed before physics.
+Uses `timer('ExecutionMode', 'fixedSpacing')` at `RenderDt` (≈33 ms). MATLAB's `fixedSpacing` guarantees the callback fires at a fixed interval from the *start* of the previous call (catching up immediately if work exceeded the period). No busy guard or frame drops — every tick runs to completion.
 
 ### Parallel pool
 
