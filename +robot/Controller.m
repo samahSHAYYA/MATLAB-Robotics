@@ -110,6 +110,11 @@ classdef Controller < handle
                 drawnow;
                 if ~obj.Running; break; end
                 obj.ActiveRobot.move(obj.DesiredDirection, obj.DesiredAmount);
+                for j = 1:length(obj.Robots)
+                    if j ~= obj.ActiveIdx
+                        obj.Robots{j}.move(robot.Direction.STOP, 0);
+                    end
+                end
                 tic;
                 for i = 1:ceil(obj.RenderDt / obj.PhysicsDt)
                     for j = 1:length(obj.Robots)

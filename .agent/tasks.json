@@ -156,7 +156,7 @@
     {
       "id": "17",
       "name": "Multi-robot scene support",
-      "description": "startRobot accepts cell array of robot types; Controller holds Robots cell array with ActiveIdx; Tab/Shift+Tab/1-9 switching; keyboard routes to active robot; all robots step and update each frame; camera tracks active robot; HUD shows active robot info. Fixed Busy flag frame drops by switching timer to 'fixedSpacing'.",
+      "description": "startRobot accepts cell array of robot types; Controller holds Robots cell array with ActiveIdx; Tab/Shift+Tab/1-9 switching; keyboard routes to active robot; all robots step and update each frame; camera tracks active robot; HUD shows active robot info. Fixed Busy flag frame drops by switching timer to 'fixedSpacing'. Non-active robots reset to STOP each frame so commands don't persist.",
       "status": "completed",
       "files": ["+robot/Controller.m", "startRobot.m", "RobotFleetApp.m", "docs/adr/0017-multi-robot-scene.md", "docs/guide/architecture.md"],
       "verified_by": "developer",

@@ -307,7 +307,7 @@ classdef RobotFleetApp < handle
             end
 
             dlg = uifigure('Name', 'Custom Spawn', ...
-                'Position', [600 400 380 300], 'Resize', 'off');
+                'Position', [600 380 380 340], 'Resize', 'off');
             gl = uigridlayout(dlg, [9 2], ...
                 'RowHeight', repmat({28}, 1, 9), ...
                 'ColumnWidth', {110, '1x'}, ...
@@ -471,15 +471,17 @@ classdef RobotFleetApp < handle
                     app.playbackStep(nSteps);
                 end
                 for k = 1:nSteps
+                    target = app.TargetDropdown.Value;
                     for i = active(:)'
                         r = app.Robots{i};
                         if ~app.ScriptMode
                             dir = app.DesiredDirection;
                             amt = app.DesiredAmount;
-                            target = app.TargetDropdown.Value;
                             if strcmp(target, 'ALL') || ...
                                strcmp(target, sprintf('R%d', i))
                                 r.move(dir, amt);
+                            else
+                                r.move(robot.Direction.STOP, 0);
                             end
                         end
                         r.step(app.SimTime, app.PhysicsDt);
