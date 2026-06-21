@@ -4,6 +4,9 @@ classdef Controller < handle
     %   captures keyboard input via WindowKeyPressFcn/WindowKeyReleaseFcn
     %   for momentary (press-to-move, release-to-stop) control.
     %
+    %   Supports multiple robots in a single scene with active robot
+    %   switching via Tab / Shift+Tab / 1-9 keys.
+    %
     %   Key bindings:
     %     arrows    → FORWARD/BACKWARD/YAW_LEFT/YAW_RIGHT
     %     w/s       → UP/DOWN (aerial robots)
@@ -17,12 +20,16 @@ classdef Controller < handle
     %     l         → toggle running lights
     %     p         → cycle path mode (manual → record → replay → manual)
     %     n         → cycle waypoint mode (off → place → navigate → off)
+    %     tab       → cycle active robot forward
+    %     shift+tab → cycle active robot backward
+    %     1-9       → jump to robot N
     %     click     → place waypoint at mouse location (in place mode)
     %     escape    → close
 
     properties
         Figure      
-        Robot       
+        Robots              cell
+        ActiveIdx   (1,1) double = 1
         Visualizer  
         Running     (1,1) logical
         PhysicsDt   (1,1) double = 0.005
@@ -52,18 +59,23 @@ classdef Controller < handle
     end
 
     methods
-        function obj = Controller(fig, robot, visualizer)
+        function obj = Controller(fig, robots, visualizer)
             %CONTROLLER  Attach keyboard callbacks to figure.
             %   Inputs: fig        - matlab.ui.Figure handle
-            %           robot      - robot.Robot subclass instance
+            %           robots     - robot.Robot instance or cell array of robots
             %           visualizer - robot.Visualizer instance
             %   Registers WindowKeyPressFcn, WindowKeyReleaseFcn, and
             %   CloseRequestFcn on the figure.
             validateattributes(fig, {'matlab.ui.Figure'}, {'scalar'});
             obj.Figure = fig;
-            obj.Robot = robot;
+            if iscell(robots)
+                obj.Robots = robots(:)';
+            else
+                obj.Robots = {robots};
+            end
             obj.Visualizer = visualizer;
             obj.Running = true;
+            obj.ActiveIdx = 1;
 
             fig.WindowKeyPressFcn = @obj.onKeyPress;
             fig.WindowKeyReleaseFcn = @obj.onKeyRelease;
@@ -75,44 +87,58 @@ classdef Controller < handle
             obj.Visualizer.AxesHandle.ButtonDownFcn = @obj.onAxesClick;
         end
 
+        function r = ActiveRobot(obj)
+            r = obj.Robots{obj.ActiveIdx};
+        end
+
         function run(obj)
             %RUN  Main simulation loop.
             %   Flushes stale events, then loops:
             %     drawnow         → process keyboard events
-            %     robot.move()    → apply direction/amount
-            %     robot.step() ×N → RK4 physics (5 ms sub-steps)
-            %     visualizer.update()
+            %     robot.move()    → apply direction/amount to active robot
+            %     robot.step() ×N → RK4 physics for ALL robots
+            %     visualizer.update() for each robot
             %   Target render rate: 1/RenderDt = 50 fps.
             drawnow;
+            for i = 1:length(obj.Robots)
+                obj.Robots{i}.move(robot.Direction.STOP, 0);
+            end
             obj.DesiredDirection = robot.Direction.STOP;
             obj.DesiredAmount = 0;
             t = 0;
             while obj.Running && ishandle(obj.Figure)
                 drawnow;
                 if ~obj.Running; break; end
-                obj.Robot.move(obj.DesiredDirection, obj.DesiredAmount);
+                obj.ActiveRobot.move(obj.DesiredDirection, obj.DesiredAmount);
                 tic;
                 for i = 1:ceil(obj.RenderDt / obj.PhysicsDt)
-                    try
-                        obj.Robot.step(t, obj.PhysicsDt);
-                    catch ME
-                        fprintf('Error in step: %s\n', ME.message);
-                        obj.Running = false;
-                        break;
+                    for j = 1:length(obj.Robots)
+                        try
+                            obj.Robots{j}.step(t, obj.PhysicsDt);
+                        catch ME
+                            fprintf('Error in step (%s): %s\n', ...
+                                class(obj.Robots{j}), ME.message);
+                            obj.Running = false;
+                            break;
+                        end
                     end
                     t = t + obj.PhysicsDt;
                 end
                 if ~obj.Running; break; end
-                try
-                    obj.Visualizer.update(obj.Robot);
-                catch ME
-                    fprintf('Error in update: %s\n', ME.message);
-                    obj.Running = false;
-                    break;
+                for j = 1:length(obj.Robots)
+                    try
+                        obj.Visualizer.update(obj.Robots{j});
+                    catch ME
+                        fprintf('Error in update (%s): %s\n', ...
+                            class(obj.Robots{j}), ME.message);
+                        obj.Running = false;
+                        break;
+                    end
                 end
+                if ~obj.Running; break; end
                 switch obj.PathMode
                     case "record"
-                        s = obj.Robot.State;
+                        s = obj.ActiveRobot.State;
                         if norm(s(8:10)) > 0.02
                             obj.RecordedPath(end+1,:) = [t, s(1), s(2), s(3)];
                         end
@@ -135,32 +161,30 @@ classdef Controller < handle
         end
 
         function setCommand(obj, direction, amount)
-            %SETCOMMAND  Directly apply a move command (for programmatic use).
-            %   Inputs: direction - robot.Direction enum
-            %           amount    - [0,1] scalar
-            obj.Robot.move(direction, amount);
+            %SETCOMMAND  Directly apply a move command to the active robot.
+            obj.ActiveRobot.move(direction, amount);
         end
 
         function initHud(obj)
             f = obj.Figure;
-            pos = [0.75, 0.85, 0.22, 0.12];
-            obj.HudHandles.Speed = annotation(f, 'textbox', ...
+            pos = [0.75, 0.82, 0.22, 0.15];
+            obj.HudHandles.Robot = annotation(f, 'textbox', ...
                 'Position', pos + [0, -0.00, 0, 0], ...
+                'String', '', ...
+                'FontSize', 10, 'FontWeight', 'bold', ...
+                'BackgroundColor', [0 0 0 0.5], 'EdgeColor', 'none', ...
+                'Color', 'white', 'HorizontalAlignment', 'left', ...
+                'Visible', 'off');
+            obj.HudHandles.Speed = annotation(f, 'textbox', ...
+                'Position', pos + [0, -0.04, 0, 0], ...
                 'String', 'Speed: 0.00 m/s', ...
                 'FontSize', 10, 'FontWeight', 'bold', ...
                 'BackgroundColor', [0 0 0 0.5], 'EdgeColor', 'none', ...
                 'Color', 'white', 'HorizontalAlignment', 'left', ...
                 'Visible', 'off');
             obj.HudHandles.Altitude = annotation(f, 'textbox', ...
-                'Position', pos + [0, -0.04, 0, 0], ...
-                'String', 'Alt: 0.00 m', ...
-                'FontSize', 10, 'FontWeight', 'bold', ...
-                'BackgroundColor', [0 0 0 0.5], 'EdgeColor', 'none', ...
-                'Color', 'white', 'HorizontalAlignment', 'left', ...
-                'Visible', 'off');
-            obj.HudHandles.Battery = annotation(f, 'textbox', ...
                 'Position', pos + [0, -0.08, 0, 0], ...
-                'String', 'Batt: 85%', ...
+                'String', 'Alt: 0.00 m', ...
                 'FontSize', 10, 'FontWeight', 'bold', ...
                 'BackgroundColor', [0 0 0 0.5], 'EdgeColor', 'none', ...
                 'Color', 'white', 'HorizontalAlignment', 'left', ...
@@ -168,6 +192,13 @@ classdef Controller < handle
             obj.HudHandles.Mode = annotation(f, 'textbox', ...
                 'Position', pos + [0, -0.12, 0, 0], ...
                 'String', 'Mode: manual', ...
+                'FontSize', 10, 'FontWeight', 'bold', ...
+                'BackgroundColor', [0 0 0 0.5], 'EdgeColor', 'none', ...
+                'Color', 'white', 'HorizontalAlignment', 'left', ...
+                'Visible', 'off');
+            obj.HudHandles.Battery = annotation(f, 'textbox', ...
+                'Position', pos + [0, -0.16, 0, 0], ...
+                'String', 'Batt: 85%', ...
                 'FontSize', 10, 'FontWeight', 'bold', ...
                 'BackgroundColor', [0 0 0 0.5], 'EdgeColor', 'none', ...
                 'Color', 'white', 'HorizontalAlignment', 'left', ...
@@ -186,12 +217,18 @@ classdef Controller < handle
         end
 
         function updateHud(obj)
-            s = obj.Robot.State;
+            rbt = obj.ActiveRobot;
+            s = rbt.State;
             vel = norm(s(8:10));
             alt = s(3);
             gaitStr = "";
-            if isprop(obj.Robot, 'GaitEnabled') && obj.Robot.GaitEnabled
+            if isprop(rbt, 'GaitEnabled') && rbt.GaitEnabled
                 gaitStr = " gait";
+            end
+            nRobots = length(obj.Robots);
+            label = sprintf('%s [%d/%d]', class(rbt), obj.ActiveIdx, nRobots);
+            if ishandle(obj.HudHandles.Robot)
+                set(obj.HudHandles.Robot, 'String', label);
             end
             if ishandle(obj.HudHandles.Speed)
                 set(obj.HudHandles.Speed, 'String', sprintf('Speed: %.2f m/s', vel));
@@ -205,9 +242,11 @@ classdef Controller < handle
                 wm = char(obj.WaypointMode);
                 wpStr = '';
                 if ~strcmp(obj.WaypointMode, "off")
-                    wpStr = sprintf('  WP: %s[%d/%d]', wm, obj.WaypointTargetIdx, size(obj.Waypoints,1));
+                    wpStr = sprintf('  WP: %s[%d/%d]', wm, ...
+                        obj.WaypointTargetIdx, size(obj.Waypoints,1));
                 end
-                set(obj.HudHandles.Mode, 'String', ['Mode: ' cam '  Path: ' pm gaitStr wpStr]);
+                set(obj.HudHandles.Mode, 'String', ...
+                    ['Mode: ' cam '  Path: ' pm gaitStr wpStr]);
             end
         end
 
@@ -217,12 +256,13 @@ classdef Controller < handle
                 fprintf('Path too short for replay.\n');
                 return;
             end
-            obj.Robot.reset();
+            rbt = obj.ActiveRobot;
+            rbt.reset();
             obj.ReplayIdx = 1;
             obj.ReplayTime = 0;
             startPos = obj.RecordedPath(1, 2:4);
-            obj.Robot.setState([startPos(1); startPos(2); startPos(3); 1; 0; 0; 0; 0; 0; 0; 0; 0; 0]);
-            obj.Visualizer.update(obj.Robot);
+            rbt.setState([startPos(1); startPos(2); startPos(3); 1; 0; 0; 0; 0; 0; 0; 0; 0; 0]);
+            obj.Visualizer.update(rbt);
         end
 
         function runReplayStep(obj)
@@ -235,7 +275,7 @@ classdef Controller < handle
                 obj.ReplayIdx = obj.ReplayIdx + 1;
             end
             if obj.ReplayIdx >= size(obj.RecordedPath, 1)
-                obj.Robot.reset();
+                obj.ActiveRobot.reset();
                 obj.PathMode = "manual";
                 fprintf('Replay complete.\n');
                 return;
@@ -247,7 +287,7 @@ classdef Controller < handle
             p0 = obj.RecordedPath(obj.ReplayIdx, 2:4);
             p1 = obj.RecordedPath(obj.ReplayIdx+1, 2:4);
             pos = p0 + frac * (p1 - p0);
-            obj.Robot.setState([pos(1); pos(2); pos(3); 1; 0; 0; 0; 0; 0; 0; 0; 0; 0]);
+            obj.ActiveRobot.setState([pos(1); pos(2); pos(3); 1; 0; 0; 0; 0; 0; 0; 0; 0; 0]);
         end
 
         function navigateToWaypoint(obj)
@@ -264,7 +304,8 @@ classdef Controller < handle
                 fprintf('Navigation complete.\n');
                 return;
             end
-            pos = obj.Robot.State(1:3);
+            rbt = obj.ActiveRobot;
+            pos = rbt.State(1:3);
             target = obj.Waypoints(obj.WaypointTargetIdx, :);
             delta = target - pos';
             dist = norm(delta);
@@ -278,10 +319,10 @@ classdef Controller < handle
                 return;
             end
             yaw = atan2(delta(2), delta(1));
-            R = robot.Utils.quatToRotmx(obj.Robot.State(4:7));
+            R = robot.Utils.quatToRotmx(rbt.State(4:7));
             currentYaw = atan2(R(2,1), R(1,1));
             yawErr = mod(yaw - currentYaw + pi, 2*pi) - pi;
-            isAerial = isa(obj.Robot, 'robot.Quadcopter');
+            isAerial = isa(rbt, 'robot.Quadcopter');
             if abs(yawErr) > 0.2
                 if yawErr > 0
                     obj.DesiredDirection = robot.Direction.YAW_LEFT;
@@ -301,13 +342,14 @@ classdef Controller < handle
                     obj.DesiredAmount = min(1.0, abs(delta(3)) / 0.5);
                 end
             end
-            obj.Robot.move(obj.DesiredDirection, obj.DesiredAmount);
+            rbt.move(obj.DesiredDirection, obj.DesiredAmount);
         end
 
         function updateCamera(obj, ~)
             ax = obj.Visualizer.AxesHandle;
-            pos = obj.Robot.State(1:3);
-            R = robot.Utils.quatToRotmx(obj.Robot.State(4:7));
+            rbt = obj.ActiveRobot;
+            pos = rbt.State(1:3);
+            R = robot.Utils.quatToRotmx(rbt.State(4:7));
             switch obj.Visualizer.CameraMode
                 case "chase"
                     offset = R * [0; -1.5; 0.5];
@@ -327,9 +369,19 @@ classdef Controller < handle
     end
 
     methods (Access = private)
+        function switchRobot(obj, idx)
+            n = length(obj.Robots);
+            obj.ActiveIdx = max(1, min(n, idx));
+            obj.DesiredDirection = robot.Direction.STOP;
+            obj.DesiredAmount = 0;
+            fprintf('Active: %s [%d/%d]\n', ...
+                class(obj.Robots{obj.ActiveIdx}), obj.ActiveIdx, n);
+        end
+
         function onKeyPress(obj, ~, evt)
             %ONKEYPRESS  Map key event to Direction + amount.
             %   Called by WindowKeyPressFcn during drawnow.
+            rbt = obj.ActiveRobot;
             switch evt.Key
                 case 'uparrow'
                     obj.DesiredDirection = robot.Direction.FORWARD;
@@ -362,20 +414,20 @@ classdef Controller < handle
                     obj.DesiredDirection = robot.Direction.PITCH_DOWN;
                     obj.DesiredAmount = 0.5;
                 case 'g'
-                    if isa(obj.Robot, 'robot.Quadruped') || ...
-                       isa(obj.Robot, 'robot.Humanoid')
-                        obj.Robot.toggleGait();
+                    if isa(rbt, 'robot.Quadruped') || ...
+                       isa(rbt, 'robot.Humanoid')
+                        rbt.toggleGait();
                     end
                 case 'space'
                     obj.DesiredDirection = robot.Direction.STOP;
                     obj.DesiredAmount = 0;
                 case 'r'
-                    obj.Robot.reset();
+                    rbt.reset();
                     obj.DesiredDirection = robot.Direction.STOP;
                     obj.DesiredAmount = 0;
                 case 'l'
-                    if isprop(obj.Robot, 'LightsOn')
-                        obj.Robot.LightsOn = ~obj.Robot.LightsOn;
+                    if isprop(rbt, 'LightsOn')
+                        rbt.LightsOn = ~rbt.LightsOn;
                     end
                 case 'h'
                     obj.HudActive = ~obj.HudActive;
@@ -423,6 +475,20 @@ classdef Controller < handle
                             obj.WaypointTargetIdx = 1;
                             fprintf('Waypoint mode: off. Waypoints cleared.\n');
                     end
+                case 'tab'
+                    n = length(obj.Robots);
+                    if n < 2; return; end
+                    if ismember('shift', evt.Modifier)
+                        obj.switchRobot(mod(obj.ActiveIdx - 2, n) + 1);
+                    else
+                        obj.switchRobot(mod(obj.ActiveIdx, n) + 1);
+                    end
+                case {'1','2','3','4','5','6','7','8','9'}
+                    n = length(obj.Robots);
+                    idx = str2double(evt.Key);
+                    if idx <= n
+                        obj.switchRobot(idx);
+                    end
                 case 'escape'
                     obj.onClose();
             end
@@ -431,29 +497,28 @@ classdef Controller < handle
 
         function onKeyRelease(obj, ~, ~)
             %ONKEYRELEASE  Reset to STOP on any key release.
-            %   This provides momentary control (move while held).
             obj.DesiredDirection = robot.Direction.STOP;
             obj.DesiredAmount = 0;
         end
 
         function onClose(obj, ~, ~)
-            %ONCLOSE  Stop the loop and delete the figure.
             obj.Running = false;
             delete(obj.Figure);
         end
 
         function onAxesClick(obj, src, ~)
             if ~strcmp(obj.WaypointMode, "place"); return; end
+            rbt = obj.ActiveRobot;
             cp = get(src, 'CurrentPoint');
             pos = cp(1, 1:3);
-            % Snap ground robots to z=0
-            if isa(obj.Robot, 'robot.DifferentialDrive')
+            if isa(rbt, 'robot.DifferentialDrive')
                 pos(3) = 0;
             end
             idx = size(obj.Waypoints, 1) + 1;
             obj.Waypoints(idx, :) = pos;
             obj.Visualizer.addWaypointMarker(pos, idx);
-            fprintf('Waypoint %d placed at (%.2f, %.2f, %.2f)\n', idx, pos(1), pos(2), pos(3));
+            fprintf('Waypoint %d placed at (%.2f, %.2f, %.2f)\n', ...
+                idx, pos(1), pos(2), pos(3));
         end
     end
 end

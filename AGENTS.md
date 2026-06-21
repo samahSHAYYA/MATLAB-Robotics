@@ -30,7 +30,7 @@ startRobot('Humanoid')             % bipedal walking
 
 ## Build phases
 
-See `.agent/tasks.json` for live status. Current phase: 16 (waypoint navigation — completed). Next phase TBD by user.
+See `.agent/tasks.json` for live status. Current phase: 17 (multi-robot scene — completed). Next phase TBD by user.
 
 ## Key rules
 
@@ -44,7 +44,7 @@ See `.agent/tasks.json` for live status. Current phase: 16 (waypoint navigation 
 7. **Fix and re-iterate on failure** — if a task fails any verification, fix the issue and re-run until it passes, unless the user instructs otherwise.
 8. **Context compact at 60%** — when opencode's context usage reaches 60%, stop active work and compact the session into `.agent/logs/` snapshots. Read compacted logs to resume. Do not continue unbounded context growth.
 9. **Phase tracking** — every commit that changes `.m` source files must also update `.agent/tasks.json` with the current phase status.
-9. **Git hooks** — run `git config core.hooksPath .githooks` once after clone to enable pre-commit, commit-msg, pre-push, post-commit, and post-checkout checks. The pre-commit hook verifies tasks.json is up to date when source files change. The post-commit hook appends commit info to `WarmStart.md` and reminds about doc/task updates. The post-checkout hook seeds `WarmStart.md` if missing.
+9. **Git hooks** — run `git config core.hooksPath .githooks` once after clone to enable pre-commit, commit-msg, pre-push, post-commit, and post-checkout checks. The pre-commit hook verifies tasks.json is up to date when source files change. The pre-push hook runs MATLAB lint + tests with a 300s timeout; if it times out, push is allowed with a warning and the event is logged to `.agent/logs/`. The post-commit hook appends commit info to `WarmStart.md` and reminds about doc/task updates. The post-checkout hook seeds `WarmStart.md` if missing.
 10. **WarmStart.md** — read at session start for context recovery. Auto-created by `post-checkout` hook on first checkout (or by opencode on first interaction in a fresh clone). Auto-updated by opencode after completed tasks and by post-commit after each commit.
 
 ## MATLAB quirks

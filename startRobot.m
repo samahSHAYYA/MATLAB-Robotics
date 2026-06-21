@@ -1,12 +1,12 @@
 function startRobot(robotType)
     %STARTROBOT Entry point for the matlab-robotics demo.
-    %   Creates a robot, figure window, visualizer, and controller, then
-    %   runs the interactive simulation loop.
+    %   Creates one or more robots, a figure window, visualizer, and
+    %   controller, then runs the interactive simulation loop.
     %
-    %   startRobot('Quadruped')        Flagship 6-DOF quadruped with trot gait
-    %   startRobot('Quadcopter')       Aerial 6-DOF quadcopter with PD attitude control
-    %   startRobot('DifferentialDrive') Planar 2-DOF wheeled robot
-    %   startRobot('Humanoid')          Bipedal 6-DOF humanoid with gait
+    %   startRobot('Quadruped')              Single robot
+    %   startRobot({'Quadruped','Quadcopter'})  Multi-robot scene
+    %
+    %   Supported types: Quadruped, Quadcopter, DifferentialDrive, Humanoid
     %
     %   Controls during demo:
     %     arrows       Move/incline (momentary — move while held)
@@ -21,9 +21,11 @@ function startRobot(robotType)
     %     l            Toggle running lights
     %     p            Cycle path mode (manual → record → replay)
     %     n            Cycle waypoint mode (off → place → navigate)
+    %     tab          Cycle active robot (multi-robot)
+    %     1-9          Jump to robot N (multi-robot)
     %     esc          Exit
     arguments
-        robotType string = 'DifferentialDrive'
+        robotType = 'DifferentialDrive'
     end
 
     import robot.DifferentialDrive
@@ -33,7 +35,49 @@ function startRobot(robotType)
     import robot.Visualizer
     import robot.Controller
 
-    switch robotType
+    if isstring(robotType) && isscalar(robotType)
+        types = {robotType};
+    elseif iscellstr(robotType) || isstring(robotType)
+        types = cellstr(robotType);
+    else
+        error('robotType must be a string or cell array of strings.');
+    end
+
+    robots = cell(1, length(types));
+    for k = 1:length(types)
+        robots{k} = buildRobot(types{k});
+    end
+
+    nameList = strjoin(types, ' + ');
+    delete(findall(groot, 'Type', 'figure'));
+    fig = figure('Name', "matlab-robotics: " + nameList, ...
+                 'NumberTitle', 'off', ...
+                 'Color', 'white');
+
+    ax = axes('Parent', fig);
+    vis = Visualizer(ax);
+    for k = 1:length(robots)
+        vis.addRobot(robots{k});
+    end
+    drawnow;
+
+    ctrl = Controller(fig, robots, vis);
+
+    title(ax, char(nameList));
+
+    nRobots = length(robots);
+    if nRobots == 1
+        fprintf('matlab-robotics demo: %s\n', types{1});
+        fprintf('Controls: arrows=move, space=stop, r=reset, g=gait, h=HUD, c=camera, l=lights, p=path, n=waypoints, esc=exit\n');
+    else
+        fprintf('matlab-robotics demo: %s (%d robots)\n', nameList, nRobots);
+        fprintf('Controls: arrows=move, tab=switch robot, 1-9=jump, space=stop, r=reset, g=gait, h=HUD, c=camera, l=lights, p=path, n=waypoints, esc=exit\n');
+    end
+    ctrl.run();
+end
+
+function rbt = buildRobot(type)
+    switch type
         case 'DifferentialDrive'
             params.geometric.wheelRadius = 0.05;
             params.geometric.trackWidth  = 0.2;
@@ -78,24 +122,6 @@ function startRobot(robotType)
             params.balance.gainD = 120;
             rbt = Humanoid(params);
         otherwise
-            error('Unknown robot type: %s', robotType);
+            error('Unknown robot type: %s', type);
     end
-
-    delete(findall(groot, 'Type', 'figure'));
-    fig = figure('Name', "matlab-robotics: " + robotType, ...
-                 'NumberTitle', 'off', ...
-                 'Color', 'white');
-
-    ax = axes('Parent', fig);
-    vis = Visualizer(ax);
-    vis.addRobot(rbt);
-    drawnow;
-
-    ctrl = Controller(fig, rbt, vis);
-
-    title(ax, char(robotType));
-
-    fprintf('matlab-robotics demo: %s\n', robotType);
-    fprintf('Controls: arrows=move, space=stop, r=reset, g=gait, h=HUD, c=camera, l=lights, p=path, n=waypoints, esc=exit\n');
-    ctrl.run();
 end

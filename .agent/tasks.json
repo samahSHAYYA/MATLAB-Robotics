@@ -152,6 +152,15 @@
       "files": ["+robot/Controller.m", "+robot/Visualizer.m", "startRobot.m", "tests/+robot/ControllerTest.m", "docs/adr/0016-waypoint-navigation.md"],
       "verified_by": "QA",
       "blocker_reason": null
+    },
+    {
+      "id": "17",
+      "name": "Multi-robot scene support",
+      "description": "startRobot accepts cell array of robot types; Controller holds Robots cell array with ActiveIdx; Tab/Shift+Tab/1-9 switching; keyboard routes to active robot; all robots step and update each frame; camera tracks active robot; HUD shows active robot info.",
+      "status": "completed",
+      "files": ["+robot/Controller.m", "startRobot.m", "docs/adr/0017-multi-robot-scene.md"],
+      "verified_by": "developer",
+      "blocker_reason": null
     }
   ]
 }
